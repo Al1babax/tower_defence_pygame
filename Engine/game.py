@@ -21,7 +21,7 @@ Enemies killed give some money
 class Game:
     def __init__(self):
         # Init the game state
-        self.state: List[List[int]] = []
+        self.state: List[List] = []
 
         # Init level
         self.level = Level()
@@ -49,8 +49,25 @@ class Game:
         for tower in self.towers:
             pass
 
+    def enemy_actions(self):
+        for enemy in self.enemies:
+            pass
+
     def update(self):
+        """
+        1. [30 tick] Move all enemies forward
+        1.1 Check if enemy reach the end --> lose life if so
+
+        2. [30 tick] Check tower actions
+        2.1 Deal damage to enemies, if enemy dies remove it, add money
+
+        3. [30 tick] Check if new enemy should spawn
+        3.1 Run the level class which has logic how to spawn enemies
+        """
+
+
         if self.frame % 10 == 0:
+            self.enemy_actions()
             self.tower_actions()
             self.spawn_enemy()
 
