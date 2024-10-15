@@ -14,4 +14,4 @@ class Engine:
         while True:
             # Update loop to run the game
             self.game.update()
-            self.render(self.game.state)
+            self.render.update(self.game.state)

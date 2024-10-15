@@ -2,5 +2,5 @@
 Class for player attributes and methods
 """
 
-class Player:
+class Tower:
     pass
