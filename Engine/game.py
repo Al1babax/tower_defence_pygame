@@ -51,7 +51,8 @@ class Game:
 
     def enemy_actions(self):
         for enemy in self.enemies:
-            pass
+            # Move enemy
+            self.enemy.move_forward(self.level.terrain)
 
     def update(self):
         """
@@ -65,10 +66,10 @@ class Game:
         3.1 Run the level class which has logic how to spawn enemies
         """
 
-
-        if self.frame % 10 == 0:
+        if self.frame % 30 == 0:
             self.enemy_actions()
             self.tower_actions()
-            self.spawn_enemy()
+
+        self.spawn_enemy()
 
         self.frame += 1

@@ -3,4 +3,5 @@ Class for player attributes and methods
 """
 
 class Tower:
-    pass
+    def __init__(self, asset_image):
+        self.position = [] # x, y
