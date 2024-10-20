@@ -46,6 +46,11 @@ class Level:
 
         # Current wave
         self.current_wave = 0
+        # Boolean to know whether to keep checking if more enemies need to be spawned
+        self.spawn_enemies = True
+        # Spawn timer set to 120 ticks
+        self.spawn_timer = 120
+        self.previous_spawn_frame = 0
 
         # Start end block positions
         self.start_blocks = []
@@ -101,9 +106,50 @@ class Level:
     def is_last_wave(self):
         return self.current_wave == len(self.waves) - 1
 
-    def spawn_enemy(self, enemy: Enemy):
-        # Choose randomly the start block and put the enemy object there
-        random_start = random.choice(self.start_blocks)
+    def spawn_enemy(self, current_frame: int):
+        # Make certain that the spawn timer is met
+        if current_frame - self.previous_spawn_frame < self.spawn_timer:
+            return
+
+        # Check if enemies still to spawn in the current wave, if there are choose randomly enemy to spawn
+        wave_enemies = self.get_current_wave_enemies()
+
+        enemy = None
+        for enemy_type, amount in wave_enemies.items():
+            if amount == 0:
+                continue
+
+            # Create enemy object
+            enemy = Enemy(enemy_type, current_frame)
+
+        # If no enemies to spawn anymore, return
+        if enemy is None:
+            self.spawn_enemies = False
+            return
+
+        # Reduce the amount of enemies to spawn
+        wave_enemies[enemy.enemy_type] -= 1
+
+        # Choose random start and make certain it is empty
+        random_start = None
+        possible_starts = self.start_blocks.copy()
+
+        while random_start is None:
+            # If no possible spawns are available, return
+            if len(possible_starts) == 0:
+                return
+
+            # Choose random start
+            random_start = random.choice(possible_starts)
+
+            # Make certain the block is terrain block and 0 to have valid start
+            start_block = self.terrain[random_start[0]][random_start[1]]
+            if isinstance(start_block, TerrainBlock) and start_block.block_type == 0:
+                break
+            else:
+                # Remove the start from possible starts
+                possible_starts.remove(random_start)
+                random_start = None
 
         # Save enemy position
         enemy.position = random_start
@@ -113,6 +159,8 @@ class Level:
 
         # Update the terrain
         self.terrain[random_start[0]][random_start[1]] = enemy
+
+        self.previous_spawn_frame = current_frame
 
     def move_enemy(self, current_position: List[int], new_position: List[int]):
         # Make sure current position is enemy
@@ -131,13 +179,45 @@ class Level:
 
     def kill_enemy(self, position: List[int]):
         # Kill the enemy and then check if the wave is over
-        pass
+        enemy = self.terrain[position[0]][position[1]]
+
+        # Remove enemy from the list
+        self.enemies.remove(enemy)
+
+        # Remove enemy from the terrain
+        self.terrain[position[0]][position[1]] = TerrainBlock(0)
+
+        # Check if the wave is over
+        if len(self.enemies) == 0:
+            # If wave is over, check if it was the last wave
+            if self.is_last_wave():
+                print("Game over!")
+            else:
+                # If not last wave, spawn next wave
+                self.spawn_enemies = True
 
     def place_tower(self, position: List[int], tower: Tower):
-        pass
+        # Check if the position is empty tower placement
+        if self.terrain[position[0]][position[1]].block_type != 1:
+            raise ValueError("Position is not empty tower placement")
+
+        # Place the tower to the position
+        self.terrain[position[0]][position[1]] = tower
+
+        # Add tower to the list of towers
+        self.towers.append(tower)
 
     def remove_tower(self, position: List[int]):
-        pass
+        # Check if the position is tower
+        if not isinstance(self.terrain[position[0]][position[1]], Tower):
+            raise ValueError("Position is not tower")
+
+        # Remove the tower from the list of towers
+        tower = self.terrain[position[0]][position[1]]
+        self.towers.remove(tower)
+
+        # Remove the tower from the terrain
+        self.terrain[position[0]][position[1]] = TerrainBlock(1)
 
     def update(self,
                event: int,
@@ -150,7 +230,6 @@ class Level:
         Function that is called from outside if any changes happen to the level
 
         Changes:
-        - Enemy is spawned
         - Enemy moves to next block
         - Enemy is killed
         - Tower is placed
@@ -165,14 +244,12 @@ class Level:
 
         match event:
             case 0:
-                self.spawn_enemy(enemy)
-            case 1:
                 self.move_enemy(current_position, new_position)
-            case 2:
+            case 1:
                 self.kill_enemy(current_position)
-            case 3:
+            case 2:
                 self.place_tower(current_position, tower)
-            case 4:
+            case 3:
                 self.remove_tower(current_position)
             case _:
                 raise ValueError("Invalid event")
