@@ -34,23 +34,21 @@ class Game:
         self.lives = 10
         self.money = 1000
 
-        # Active elements
-        self.towers: List[Tower] = []
-        self.enemies: List[Enemy] = []
-
     def spawn_enemy(self):
         # Make enemy array based on waves, every enemy has attribute spawn_frame that tells when they should spawn
         # Every wave will have x amount of enemies and
+
+        # MAYBE REMOVE THIS FUNCTION AND MOVE TO LEVEL CLASS
         pass
 
     def tower_actions(self):
         # Function that applies all the tower damage to enemies in their area
         # Loop through towers and loop through every enemy in their are of influence, and then apply towers damage
-        for tower in self.towers:
+        for tower in self.level.towers:
             pass
 
     def enemy_actions(self):
-        for enemy in self.enemies:
+        for enemy in self.level.enemies:
             # Move enemy
             self.enemy.move_forward(self.level.terrain)
 

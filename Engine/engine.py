@@ -10,6 +10,8 @@ class Engine:
         game = Game()
         render = Render()
 
+        self.frame = 0
+
     def run(self):
         while True:
             # Update loop to run the game
