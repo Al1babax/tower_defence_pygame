@@ -9,18 +9,21 @@ from pygame import time
 class Engine:
     def __init__(self):
         self.game = Game()
-        self.render = Render(self.game.game_running)
+        self.render = Render()
         self.clock = time.Clock()
 
     def run(self):
         while self.game.game_running:
+            print(self.game.game_running)
             # Update loop to run the game
             self.game.update()
-            self.render.update(self.game.level)
+            continue_game: bool = self.render.update(self.game.level)
+
+            if continue_game is False:
+                self.game.game_running = False
 
             # Create tick rate
             self.clock.tick(60)
-
 
         # Cleanup
         self.render.close_window()
