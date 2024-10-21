@@ -12,8 +12,6 @@ class TerrainBlock:
     0 = enemy area blocks
     1 = tower placements
     2 = static block
-    3 = start/spawn
-    4 = end
     """
 
     def __init__(self, block_type: int, asset_image_path: Optional[str] = None):
