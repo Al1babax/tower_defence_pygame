@@ -3,7 +3,7 @@ from typing import Optional, List, Tuple
 # Engine modules
 from Engine.tower import Tower
 from Engine.enemy import Enemy
-from Engine.level import Level
+from Engine.level import Level, TerrainBlock
 
 """
 Class that handles all the logic of the game
@@ -38,7 +38,14 @@ class Game:
         # Function that applies all the tower damage to enemies in their area
         # Loop through towers and loop through every enemy in their are of influence, and then apply towers damage
         for tower in self.level.towers:
-            tower.shoot(self.level.enemies, self.frame)
+            possible_death_enemy: Enemy = tower.shoot(self.level.enemies, self.frame)
+
+            if possible_death_enemy is None:
+                continue
+
+            # If enemy dies, remove it from the enemy_list, add 0 terrain block to the position and add money
+            self.money += possible_death_enemy.money_value
+            self.level.update(1, current_position=possible_death_enemy.position)
 
     def enemy_actions(self):
         # Go through all the enemies and try to move them forward

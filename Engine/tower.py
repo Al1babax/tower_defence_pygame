@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import os
 import math
 
@@ -87,10 +87,17 @@ class Tower:
         self.tower_level += 1
         self.set_tower_properties()
 
-    def shoot(self, enemy_list: List, cur_frame: int):
+    def shoot(self, enemy_list: List, cur_frame: int) -> Optional:
+        """
+        Shoot at the enemy if it is in range
+        Return True if enemy died, False otherwise
+        :param enemy_list:
+        :param cur_frame:
+        :return:
+        """
         # If shot cooldown has not elapsed, tower cannot shoot
         if cur_frame - self.last_shot_frame < self.shot_cooldown:
-            return
+            return None
 
         for enemy in enemy_list:
             enemy_row, enemy_col = enemy.position[0], enemy.position[1]
@@ -102,7 +109,8 @@ class Tower:
                 continue
 
             # If an enemy is shot, cooldown starts over and we exit the loop
-            # TODO: take_damage returns bool whether enemy died or not, if enemy died, remove it from the list
-            enemy.take_damage(self.damage)
+            enemy_died: bool = enemy.take_damage(self.damage)
+
             self.last_shot_frame = cur_frame
-            return
+
+            return enemy if enemy_died else None
