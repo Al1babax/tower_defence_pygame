@@ -13,10 +13,10 @@ class Engine:
         self.clock = time.Clock()
 
     def run(self):
-        while True:
+        while self.game.game_running:
             # Update loop to run the game
             self.game.update()
-            self.render.update(self.game.level.terrain)
+            self.render.update(self.game.level.terrain, self.game.game_running)
 
             # Create tick rate
             self.clock.tick(60)
