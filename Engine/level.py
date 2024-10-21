@@ -1,8 +1,7 @@
 import random
 
 from typing import Optional, List
-from tower import Tower
-from enemy import Enemy
+from Engine.tower import Tower
 
 
 class TerrainBlock:
@@ -58,7 +57,7 @@ class Level:
         self.terrain: List[List] = []
 
         # List of enemies and towers
-        self.enemies: List[Enemy] = []
+        self.enemies: List = []
         self.towers: List[Tower] = []
 
     def create_terrain(self):
@@ -104,7 +103,8 @@ class Level:
     def is_last_wave(self):
         return self.current_wave == len(self.waves) - 1
 
-    def spawn_enemy(self, current_frame: int):
+    def spawn_enemy_wave(self, current_frame: int):
+        from Engine.enemy import Enemy
         # Make certain that the spawn timer is met
         if current_frame - self.previous_spawn_frame < self.spawn_timer:
             return
@@ -161,6 +161,7 @@ class Level:
         self.previous_spawn_frame = current_frame
 
     def move_enemy(self, current_position: List[int], new_position: List[int]):
+        from Engine.enemy import Enemy
         # Make sure current position is enemy
         if not isinstance(self.terrain[current_position[0]][current_position[1]], Enemy):
             raise ValueError("Current position is not enemy")
@@ -220,7 +221,7 @@ class Level:
     def update(self,
                event: int,
                tower: Optional[Tower] = None,
-               enemy: Optional[Enemy] = None,
+               enemy = None,
                current_position: Optional[List[int]] = None,
                new_position: Optional[List[int]] = None
                ):

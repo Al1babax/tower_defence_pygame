@@ -21,8 +21,8 @@ towers_template = {
             "shot_cooldown": 60,
             "damage": 10,
             "damage_type": "base",
-            "projectile_asset": None,
-            "tower_asset": None,
+            "projectile_asset": "",
+            "tower_asset": "",
         },
         1: {
             "hp": 150,
@@ -31,8 +31,8 @@ towers_template = {
             "shot_cooldown": 50,
             "damage": 15,
             "damage_type": "base",
-            "projectile_asset": None,
-            "tower_asset": None,
+            "projectile_asset": "",
+            "tower_asset": "",
         }
     }
 }
@@ -53,8 +53,8 @@ class Tower:
         self.damage_type: int = 0
 
         # Paths for Tower and Projectiles assets
-        self.projectile_asset_path = None
-        self.tower_asset_path = None
+        self.projectile_asset_path = ""
+        self.tower_asset_path = ""
 
         self.set_tower_properties()
 
@@ -71,12 +71,14 @@ class Tower:
 
         self.projectile_asset_path = os.path.join(PROJECTILE_PATH,
                                                   towers_template[self.type][self.tower_level]["projectile_asset"])
-        if not os.path.exists(self.projectile_asset_path):
-            raise (f"Error with asset path: {self.projectile_asset_path}")
+
+        # TODO: Activate check paths once have some assets
+        # if not os.path.exists(self.projectile_asset_path):
+        #     raise (f"Error with asset path: {self.projectile_asset_path}")
 
         self.tower_asset_path = os.path.join(TOWER_PATH, towers_template[self.type][self.tower_level]["tower_asset"])
-        if not os.path.exists(self.tower_asset_path):
-            raise (f"Error with asset path: {self.tower_asset_path}")
+        # if not os.path.exists(self.tower_asset_path):
+        #     raise (f"Error with asset path: {self.tower_asset_path}")
 
     def upgrade_tower(self):
         if self.tower_level + 1 > max(towers_template[self.type].keys()):

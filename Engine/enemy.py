@@ -1,5 +1,5 @@
 from typing import Optional, List
-from level import TerrainBlock
+from Engine.level import TerrainBlock
 import os
 
 """
@@ -16,21 +16,21 @@ template_enemies = {
         "speed": 10,
         "money_value": 50,
         "armor": 0,
-        "enemy_asset": None
+        "enemy_asset": ""
     },
     "buff": {
         "health": 150,
         "speed": 8,
         "money_value": 100,
         "armor": 5,
-        "enemy_asset": None
+        "enemy_asset": ""
     },
     "fast": {
         "health": 80,
         "speed": 20,
         "money_value": 75,
         "armor": 2,
-        "enemy_asset": None
+        "enemy_asset": ""
     },
 }
 
@@ -58,8 +58,9 @@ class Enemy:
         self.armor = template_enemies[enemy_type]["armor"]
         self.enemy_asset_path = os.path.join(ENEMY_PATH, template_enemies[enemy_type]["enemy_asset"])
 
-        if not os.path.exists(self.enemy_asset_path):
-            raise ValueError(f"Enemy asset path not found for enemy type: {enemy_type}")
+        # TODO: Activate check paths once have some assets
+        # if not os.path.exists(self.enemy_asset_path):
+        #     raise ValueError(f"Enemy asset path not found for enemy type: {enemy_type}")
 
         # Frame corresponding to the latest move
         self.last_move_frame = 0

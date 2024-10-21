@@ -1,9 +1,9 @@
 from typing import Optional, List, Tuple
 
 # Engine modules
-from tower import Tower
-from enemy import Enemy
-from level import Level
+from Engine.tower import Tower
+from Engine.enemy import Enemy
+from Engine.level import Level
 
 """
 Class that handles all the logic of the game
@@ -63,6 +63,6 @@ class Game:
         """
         self.enemy_actions()
         self.tower_actions()
-        self.level.spawn_enemies(self.frame)
+        self.level.spawn_enemy_wave(self.frame)
 
         self.frame += 1

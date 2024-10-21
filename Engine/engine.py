@@ -1,8 +1,8 @@
 """
 Engine class that binds all the modules of the engine
 """
-from game import Game
-from render import Render
+from Engine.game import Game
+from Engine.render import Render
 from pygame import time
 
 
