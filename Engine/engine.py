@@ -17,10 +17,12 @@ class Engine:
             print(self.game.game_running)
             # Update loop to run the game
             self.game.update()
-            continue_game: bool = self.render.update(self.game.level)
+            return_package: dict = self.render.update(self.game.level)
 
-            if continue_game is False:
+            if return_package["game_over"] is True:
                 self.game.game_running = False
+
+            # Deal with the package and check up all the evens
 
             # Create tick rate
             self.clock.tick(60)
