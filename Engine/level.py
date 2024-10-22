@@ -60,6 +60,9 @@ class Level:
         self.enemies: List = []
         self.towers: List[Tower] = []
 
+        # Create terrain
+        self.create_terrain()
+
     def create_terrain(self):
         # Create terrain based on the level design
         # For now create a simple terrain for testing and dev purposes
@@ -118,7 +121,8 @@ class Level:
                 continue
 
             # Create enemy object
-            enemy = Enemy(enemy_type, current_frame)
+            enemy = Enemy(enemy_type)
+            break
 
         # If no enemies to spawn anymore, return
         if enemy is None:
@@ -160,6 +164,10 @@ class Level:
 
         self.previous_spawn_frame = current_frame
 
+        # Calculate the shortest path for enemy
+        # TODO: Currently can only handle one end block
+        enemy.calculate_shortest_path(self.terrain, self.end_blocks[0])
+
     def move_enemy(self, current_position: List[int], new_position: List[int]):
         from Engine.enemy import Enemy
         # Make sure current position is enemy
@@ -194,6 +202,7 @@ class Level:
             else:
                 # If not last wave, spawn next wave
                 self.spawn_enemies = True
+                self.next_wave()
 
     def place_tower(self, position: List[int], tower: Tower):
         # Check if the position is empty tower placement

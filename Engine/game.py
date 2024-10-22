@@ -55,7 +55,14 @@ class Game:
         # enemies will block each other for now because they cannot yet overlap
         for enemy in self.level.enemies:
             # Move enemy
-            enemy.move_forward(self.level.terrain, self.level.end_blocks)
+            enemy_reach_end = enemy.move_forward(self.level.terrain, self.level.end_blocks, self.frame)
+
+            if enemy_reach_end:
+                # If enemy reached the end, remove enemy from the list, remove 0 terrain block from the position
+                # and remove 1 life from the player
+                self.lives -= 1
+                self.level.update(1, current_position=enemy.position)
+                print(f"Enemy reached the end! Lives left: {self.lives}")
 
     def update(self):
         """
@@ -68,6 +75,10 @@ class Game:
         3. Check if new enemy should spawn
         3.1 Run the level class which has logic how to spawn enemies
         """
+        if self.lives <= 0:
+            print("Game over! You lost all your lives!")
+            self.game_running = False
+
         self.enemy_actions()
         self.tower_actions()
         self.level.spawn_enemy_wave(self.frame)

@@ -1,5 +1,6 @@
 from typing import Optional, List
 from Engine.level import TerrainBlock
+import math
 import os
 
 """
@@ -13,38 +14,146 @@ ENEMY_PATH = "assets/enemies"
 template_enemies = {
     "normal": {
         "health": 100,
-        "speed": 10,
+        "speed": 60,
         "money_value": 50,
         "armor": 0,
         "enemy_asset": ""
     },
     "buff": {
         "health": 150,
-        "speed": 8,
+        "speed": 50,
         "money_value": 100,
         "armor": 5,
         "enemy_asset": ""
     },
     "fast": {
         "health": 80,
-        "speed": 20,
+        "speed": 40,
         "money_value": 75,
         "armor": 2,
         "enemy_asset": ""
     },
 }
 
-def a_star_algorithm(current_position: List[int], terrain: List[List]) -> List[List[int]]:
-    # Calculate shortest path using A* algorithm
+
+class Node:
+    def __init__(self, parent=None, position=None):
+        # Node parent and position
+        self.parent = parent
+        # Position is used as unique identifier for the node
+        self.position = position
+
+        # Node attributes
+        self.travel_cost = 0
+        self.heuristic = 0
+        self.total_cost = 0
+
+
+def euclidean_distance(position: List[int], end_position: List[int]) -> float:
+    # Calculate the Euclidean distance between two points
+    return math.sqrt((position[0] - end_position[0]) ** 2 + (position[1] - end_position[1]) ** 2)
+
+
+def get_neighbors(node: Node, terrain: List[List]) -> List[List[int]]:
+    # Get the neighbors of the current node
+    neighbors = []
+
+    # Check node to every position to every direction (up, down, left, right)
+    # Check if the position is within the terrain
+    # If position is open block for enemy or enemy block, add to neighbors
+    starting_position = node.position
+    offsets = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+
+    for offset in offsets:
+        new_position = [starting_position[0] + offset[0], starting_position[1] + offset[1]]
+
+        if new_position[0] < 0 or new_position[0] >= len(terrain):
+            continue
+
+        if new_position[1] < 0 or new_position[1] >= len(terrain[0]):
+            continue
+
+        new_block = terrain[new_position[0]][new_position[1]]
+
+        if isinstance(new_block, TerrainBlock) and new_block.block_type == 0:
+            neighbors.append(new_position)
+        elif isinstance(new_block, Enemy):
+            neighbors.append(new_position)
+
+    return neighbors
+
+
+def a_star_algorithm(current_position: List[int], terrain: List[List], end_position: List[int]) -> List[List[int]]:
+    # Calculate the shortest path using A* algorithm
     # Return the shortest path as a list
 
     # Allowed nodes to move to are terrain blocks of type 0 and enemy blocks
-    #
-    return []
+    # Distance between nodes is 1
+    stack = []
+    visited = []
+    path = []
+    node_distance = 1
+
+    # Create start and end nodes
+    start_node = Node(None, current_position)
+    end_node = Node(None, end_position)
+
+    # Calculate heuristic for the start node
+    start_node.heuristic = euclidean_distance(start_node.position, end_node.position)
+
+    # Add start node to the stack
+    stack.append(start_node)
+
+    current_node = stack.pop(0)
+
+    while current_node.position != end_node.position:
+        # Get the neighbors of the current node
+        neighbors_positions = get_neighbors(current_node, terrain)
+
+        # Check all the neighbors
+        for neighbor_pos in neighbors_positions:
+            # Create a new node
+            new_node = Node(current_node, neighbor_pos)
+
+            # Calculate the travel cost
+            new_node.travel_cost = current_node.travel_cost + node_distance
+
+            # Calculate the heuristic
+            new_node.heuristic = euclidean_distance(new_node.position, end_node.position)
+
+            # Calculate the total cost
+            new_node.total_cost = new_node.travel_cost + new_node.heuristic
+
+            # Check if the node has been visited
+            if new_node.position in visited:
+                continue
+
+            # Add the node to the stack
+            stack.append(new_node)
+
+        # Add the current node to the visited list
+        visited.append(current_node.position)
+
+        # Sort the stack based on the total cost
+        stack = sorted(stack, key=lambda x: x.total_cost)
+
+        # Get the next node
+        current_node = stack.pop(0)
+
+    # Reconstruct the path from the end node
+    while current_node is not None:
+        path.append(current_node.position)
+        current_node = current_node.parent
+
+    # Reverse path and remove itself start from path
+    path = path[::-1][1:]
+
+    return path
+
 
 # General Enemy class with shared actions
 class Enemy:
-    def __init__(self, enemy_type, current_frame: int):
+    def __init__(self, enemy_type: str):
         self.position = None
         self.enemy_type = enemy_type
 
@@ -65,16 +174,22 @@ class Enemy:
         # Frame corresponding to the latest move
         self.last_move_frame = 0
 
-    def move_forward(self, terrain: List[List], end_pos: List[int]) -> bool:
+    def calculate_shortest_path(self, terrain: List[List], end_pos: List[int]) -> None:
+        # Calculate shortens path and save to self.shortest_path
+        self.shortest_path = a_star_algorithm(self.position, terrain, end_pos)
+
+    def move_forward(self, terrain: List[List], end_pos: List[List[int]], current_frame: int) -> bool:
         """
         Move enemy to the next block
+        :param current_frame:
         :param end_pos:
         :param terrain:
         :return: True if enemy reaches the end block and False otherwise
         """
-
-        # Calculate shortens path and save to self.shortest_path
-        self.shortest_path = a_star_algorithm(self.position, terrain)
+        # Make certain that enemy can move, use movement_speed of the enemy and frame difference
+        # Use last move frame to calculate the time difference
+        if current_frame - self.last_move_frame < self.speed:
+            return False
 
         # Move enemy to the next block
         next_block = self.shortest_path.pop(0)
@@ -90,7 +205,11 @@ class Enemy:
         # Update enemy position
         self.position = next_block
 
-        return self.position == end_pos
+        # Update last move frame
+        self.last_move_frame = current_frame
+
+        # Check if enemy reached the end
+        return self.position in end_pos
 
     def take_damage(self, damage: int) -> bool:
         # General damage logic for all enemies, total_damage = damage - armor

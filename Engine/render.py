@@ -32,10 +32,10 @@ class Render:
         # Update the screen
         self.screen.fill((0, 0, 0))
 
-        time.sleep(3)
+        # time.sleep(3)
 
         # Game over
-        self.return_package["game_over"] = True
+        # self.return_package["game_over"] = True
 
         return self.return_package
 
