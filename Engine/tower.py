@@ -37,6 +37,16 @@ towers_template = {
     }
 }
 
+def euclidean_distance(position: List[int], end_position: List[int]) -> float:
+    return math.sqrt((position[0] - end_position[0]) ** 2 + (position[1] - end_position[1]) ** 2)
+
+def calculate_tower_angle(tower_position: List[int],
+                          enemy_position: List[int],
+                          projectile_speed: int,
+                          enemy_movement_speed: int
+                          ) -> int:
+    pass
+
 
 class Tower:
     def __init__(self, tower_type: str, tower_position: List[int]):
@@ -51,6 +61,7 @@ class Tower:
         self.shot_cooldown: int = 0
         self.damage: int = 0
         self.damage_type: int = 0
+        self.rotation: int = 90
 
         # Paths for Tower and Projectiles assets
         self.projectile_asset_path = ""

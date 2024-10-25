@@ -1,15 +1,23 @@
-import pygame
-from Engine.level import Level
-from typing import Optional, Tuple
 import json
+from dataclasses import dataclass
+from typing import Optional, Tuple, List
+
+import pygame
 
 """
 Class to render the game to the screen
 """
 
+CAPTION_TEXT = "Tower Defense"
+WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
+SCREEN_X_POS, SCREEN_Y_POS = 20, 20
+SCREEN_WIDTH, SCREEN_HEIGHT = 1240, 680
+
 # Read sprite map from json file
 with open("Engine/sprite_map.json", "r") as file:
     sprite_map = json.load(file)
+
+sprite_sheet = pygame.image.load("Assets/main.png")
 
 
 class Sprite:
@@ -20,7 +28,6 @@ class Sprite:
             tower_level: Optional[int] = 0,
             size: Tuple[int, int] = (80, 80)
     ):
-        self.sprite_sheet = pygame.image.load("Assets/main.png")
         self.sprite_category = sprite_category
         self.sprite_type = sprite_type
         self.size = size
@@ -44,7 +51,7 @@ class Sprite:
         elif self.sprite_category == "towers":
             sprite_position = sprite_map[self.sprite_category][self.sprite_type][self.tower_level]
 
-        sprite = self.extract_sprite(self.sprite_sheet, sprite_position[0], sprite_position[1])
+        sprite = self.extract_sprite(sprite_sheet, sprite_position[0], sprite_position[1])
         sprite = pygame.transform.scale(sprite, self.size)
 
         self.sprite_object = sprite
@@ -73,66 +80,164 @@ class Sprite:
         else:
             self.current_animation += 1
 
+        self.init_sprite()
+
     def rotate_sprite(self, angle: int):
         self.sprite_object = pygame.transform.rotate(self.sprite_object, angle)
 
 
-return_package = {
-    "game_over": False,
-    "new_tower": {
-        "position": None,
-        "type": None
-    },
-    "remove_tower": None
-}
+@dataclass
+class ReturnPackage:
+    game_over: bool = False
+    new_tower_position: Optional[List[int]] = None
+    new_tower_type: Optional[str] = None
+    remove_tower_position: Optional[List[int]] = None
 
 
 class Render:
     def __init__(self):
+        # Create game window, and screen where game will be displayed
+        self.window_width, self.window_height = WINDOW_WIDTH, WINDOW_HEIGHT
+        self.screen_width, self.screen_height = SCREEN_WIDTH, SCREEN_HEIGHT
+        self.game_window: Optional[pygame.Surface] = None
+        self.screen_rect = None
+        self.screen_surf = None
+
+        self.return_package: Optional[ReturnPackage] = None
+
+        # Get the game window to show up
+        self.create_game_window()
+
+    def create_game_window(self):
+        # Imports all pygame modules
         pygame.init()
-        self.screen_width = 1280
-        self.screen_height = 720
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-        pygame.display.set_caption("Tower Defense")
 
-        self.return_package = return_package
+        # Set caption (i.e. title for our game window)
+        pygame.display.set_caption(CAPTION_TEXT)
 
-        self.sprite_object = Sprite(
-            sprite_category="ground",
-            sprite_type="tower",
-            enemy_action=None,
-            tower_level=0,
-            size=(80, 80)
-        )
-        # self.sprite_object.upgrade_tower()
-        # self.sprite_object.upgrade_tower()
+        # Create [width * height] window and screen where our entire game window will be displayed
+        self.game_window = pygame.display.set_mode((self.window_width, self.window_height))
+        self.screen_rect = pygame.Rect(SCREEN_X_POS, SCREEN_Y_POS, self.screen_width, self.screen_height)
 
-    def update(self, render_package: dict) -> dict:
-        self.return_package = return_package
+    def rotate_terrain(self, vertical_terrain):
+        row_len = len(vertical_terrain[0])
+        rotated_terrain = [[row[j] for row in vertical_terrain] for j in range(row_len - 1, -1, -1)]
+        return rotated_terrain
 
-        # Update the screen
-        self.screen.fill((0, 0, 0))
+    def render_game(self, level):
+        from Engine.level import TerrainBlock
+        from Engine.enemy import Enemy
+        from Engine.tower import Tower
 
-        # Deal with events
+        # Render the main game window (white rectangle, initially)
+        # pygame.draw.rect(self.game_window, "White", self.screen_rect)
+        self.screen_surf = pygame.Surface((self.screen_width, self.screen_height))
+        # self.screen_surf.blit(self.game_window, (SCREEN_X_POS, SCREEN_Y_POS))
+
+        # Rotate the terrain matrix so enemies move left to right
+        rotated_terrain = self.rotate_terrain(level.terrain)
+
+        # Based on current terrain map, get a scaled square size for our base
+        sq_size = min(self.screen_width // len(rotated_terrain[0]), self.screen_height // len(rotated_terrain))
+
+        # List of towers, to show each tower's shooting range
+        tower_list = []
+
+        # Display terrain map on screen: 0 = enemy, 1 = tower, 2 = static block
+        for i, row in enumerate(rotated_terrain):
+            for j, sq in enumerate(row):
+                sq_color = ""
+                sq_sprite = None
+                if isinstance(sq, TerrainBlock):
+                    if sq.block_type == 0:  # Enemy path
+                        sq_color = "antiquewhite4"
+                        sq_sprite = Sprite(
+                            sprite_category="ground",
+                            sprite_type="dirt",
+                            enemy_action="run",
+                            tower_level=0,
+                            size=(sq_size, sq_size)
+                        )
+                    if sq.block_type == 1:  # Empty tower block
+                        sq_color = "White"
+                        sq_sprite = Sprite(
+                            sprite_category="ground",
+                            sprite_type="tower",
+                            enemy_action="run",
+                            tower_level=0,
+                            size=(sq_size, sq_size)
+                        )
+                    if sq.block_type == 2:  # Static block
+                        sq_color = "azure3"
+                        sq_sprite = Sprite(
+                            sprite_category="ground",
+                            sprite_type="grass",
+                            enemy_action="run",
+                            tower_level=0,
+                            size=(sq_size, sq_size)
+                        )
+
+                elif isinstance(sq, Enemy):
+                    sq_color = "Red"  # Enemy block
+                    sq_sprite = Sprite(
+                        sprite_category="enemies",
+                        sprite_type="normal",
+                        enemy_action="run",
+                        tower_level=0,
+                        size=(sq_size, sq_size)
+                    )
+
+                elif isinstance(sq, Tower):
+                    sq_color = "Blue"  # Tower block
+                    sq_sprite = Sprite(
+                        sprite_category="towers",
+                        sprite_type="normal",
+                        enemy_action="run",
+                        tower_level="0",
+                        size=(sq_size, sq_size)
+                    )
+
+                # Highlight player base in green
+                if [j, len(rotated_terrain) - 1 - i] in level.end_blocks:
+                    sq_color = "Green"
+
+                # Display block on screen
+                sq_rect = pygame.Rect(SCREEN_X_POS + (j * sq_size), SCREEN_Y_POS + (i * sq_size), sq_size, sq_size)
+
+                self.game_window.blit(sq_sprite.get_sprite(), sq_rect)
+
+                # If current block is a tower, add it to the list of towers (to show shooting range)
+                if isinstance(sq, Tower):
+                    tower_list.append([sq, sq_rect, sq_color])
+
+        # For each tower placed, show shooting range
+        for tower, tower_rect, tower_color in tower_list:
+            pygame.draw.circle(self.game_window, tower_color, tower_rect.center, tower.range * sq_size, width=1)
+
+    def get_keyboard_input(self):
+        key_pressed = pygame.key.get_pressed()
+        if key_pressed[pygame.K_ESCAPE]:
+            self.return_package.game_over = True
+
+    def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.return_package["game_over"] = True
+                self.return_package.game_over = True
 
-        # Display normal enemy sprite in the middle
-        self.screen.blit(self.sprite_object.get_sprite(), (self.screen_width // 2, self.screen_height // 2))
+    def update(self, render_package: dict) -> ReturnPackage:
+        self.return_package = ReturnPackage()
 
-        # Example for updating the sprite animation
-        # if render_package["current_frame"] % 20 == 0:
-        #     self.sprite_object.select_next_animation()
+        self.game_window.fill("Black")
 
-        # Example for rotating the sprite
-        # if render_package["current_frame"] % 20 == 0:
-        #     self.sprite_object.rotate_sprite(90)
+        # Handles keyboard inputs
+        self.get_keyboard_input()
 
-        # Game over
-        # self.return_package["game_over"] = True
+        # Handles pygame events
+        self.handle_events()
 
-        pygame.display.flip()
+        # Update various elements on screen
+        self.render_game(render_package["level"])
+        pygame.display.update()
         return self.return_package
 
     def close_window(self):

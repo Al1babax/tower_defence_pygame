@@ -42,8 +42,7 @@ class Game:
         # Find a terrain block with open turret slot and spawn a turret there
         position = [10, 3]
         new_tower = Tower("standard", position)
-        self.level.terrain[position[0]][position[1]] = new_tower
-        self.level.towers.append(new_tower)
+        self.level.update(2, current_position=position, tower=new_tower)
 
     def tower_actions(self):
         # Function that applies all the tower damage to enemies in their area
