@@ -65,7 +65,7 @@ class Tower:
         self.hp = towers_template[self.type][self.tower_level]["hp"]
         self.cost = towers_template[self.type][self.tower_level]["cost"]
         self.range = towers_template[self.type][self.tower_level]["range"]
-        self.shot_cooldown = towers_template[self.type][self.tower_level]["fire_rate"]
+        self.shot_cooldown = towers_template[self.type][self.tower_level]["shot_cooldown"]
         self.damage = towers_template[self.type][self.tower_level]["damage"]
         self.damage_type = towers_template[self.type][self.tower_level]["damage_type"]
 
@@ -113,4 +113,5 @@ class Tower:
 
             self.last_shot_frame = cur_frame
 
+            print(f"Shot at enemy! Enemy life left {enemy.hp}")
             return enemy if enemy_died else None

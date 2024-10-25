@@ -34,6 +34,17 @@ class Game:
         self.lives = 10
         self.money = 1000
 
+        # Force spawn turret for testing
+        self.force_spawn_turret_for_testing()
+
+    def force_spawn_turret_for_testing(self):
+        # Force spawn turret for testing
+        # Find a terrain block with open turret slot and spawn a turret there
+        position = [10, 3]
+        new_tower = Tower("standard", position)
+        self.level.terrain[position[0]][position[1]] = new_tower
+        self.level.towers.append(new_tower)
+
     def tower_actions(self):
         # Function that applies all the tower damage to enemies in their area
         # Loop through towers and loop through every enemy in their are of influence, and then apply towers damage
