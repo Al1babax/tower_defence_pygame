@@ -36,7 +36,7 @@ towers_template = {
         }
     }
 }
-
+# TODO: write functions to figure out projectile angle and turret angle
 def euclidean_distance(position: List[int], end_position: List[int]) -> float:
     return math.sqrt((position[0] - end_position[0]) ** 2 + (position[1] - end_position[1]) ** 2)
 

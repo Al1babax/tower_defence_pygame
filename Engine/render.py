@@ -8,6 +8,7 @@ import pygame
 Class to render the game to the screen
 """
 
+# TODO: Move all these to config file
 CAPTION_TEXT = "Tower Defense"
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 SCREEN_X_POS, SCREEN_Y_POS = 20, 20
@@ -25,7 +26,7 @@ class Sprite:
             self, sprite_category: str,
             sprite_type: str,
             enemy_action: Optional[str] = None,
-            tower_level: Optional[int] = 0,
+            tower_level: Optional[str] = "0",
             size: Tuple[int, int] = (80, 80)
     ):
         self.sprite_category = sprite_category
@@ -144,66 +145,53 @@ class Render:
         tower_list = []
 
         # Display terrain map on screen: 0 = enemy, 1 = tower, 2 = static block
+        # TODO: Maybe better if sprites are created only once for each tile and only changed if needed vs created every frame
+        # TODO: Save previous terrain and compare if changed to only update changed tiles/objects
         for i, row in enumerate(rotated_terrain):
             for j, sq in enumerate(row):
                 sq_color = ""
-                sq_sprite = None
+                # Sprite info
+                sprite_category = ""
+                sprite_type = ""
+                enemy_action = ""
+                tower_level = ""
+                size = (sq_size, sq_size)
+
                 if isinstance(sq, TerrainBlock):
                     if sq.block_type == 0:  # Enemy path
                         sq_color = "antiquewhite4"
-                        sq_sprite = Sprite(
-                            sprite_category="ground",
-                            sprite_type="dirt",
-                            enemy_action="run",
-                            tower_level=0,
-                            size=(sq_size, sq_size)
-                        )
+                        sprite_category = "ground"
+                        sprite_type = "dirt"
                     if sq.block_type == 1:  # Empty tower block
                         sq_color = "White"
-                        sq_sprite = Sprite(
-                            sprite_category="ground",
-                            sprite_type="tower",
-                            enemy_action="run",
-                            tower_level=0,
-                            size=(sq_size, sq_size)
-                        )
+                        sprite_category = "ground"
+                        sprite_type = "tower"
                     if sq.block_type == 2:  # Static block
                         sq_color = "azure3"
-                        sq_sprite = Sprite(
-                            sprite_category="ground",
-                            sprite_type="grass",
-                            enemy_action="run",
-                            tower_level=0,
-                            size=(sq_size, sq_size)
-                        )
-
+                        sprite_category = "ground"
+                        sprite_type = "grass"
                 elif isinstance(sq, Enemy):
                     sq_color = "Red"  # Enemy block
-                    sq_sprite = Sprite(
-                        sprite_category="enemies",
-                        sprite_type="normal",
-                        enemy_action="run",
-                        tower_level=0,
-                        size=(sq_size, sq_size)
-                    )
-
+                    sprite_category = "enemies"
+                    sprite_type = "normal"
+                    enemy_action = "run"
                 elif isinstance(sq, Tower):
                     sq_color = "Blue"  # Tower block
-                    sq_sprite = Sprite(
-                        sprite_category="towers",
-                        sprite_type="normal",
-                        enemy_action="run",
-                        tower_level="0",
-                        size=(sq_size, sq_size)
-                    )
+                    sprite_category = "towers"
+                    sprite_type = "normal"
+                    tower_level = "0"
+
+                sq_sprite = Sprite(sprite_category=sprite_category, sprite_type=sprite_type, enemy_action=enemy_action,
+                                   tower_level=tower_level, size=size)
 
                 # Highlight player base in green
                 if [j, len(rotated_terrain) - 1 - i] in level.end_blocks:
                     sq_color = "Green"
 
-                # Display block on screen
+                # Create rectangle as container for the sprite
                 sq_rect = pygame.Rect(SCREEN_X_POS + (j * sq_size), SCREEN_Y_POS + (i * sq_size), sq_size, sq_size)
 
+                # Draw the sprite on the screen
                 self.game_window.blit(sq_sprite.get_sprite(), sq_rect)
 
                 # If current block is a tower, add it to the list of towers (to show shooting range)
@@ -226,7 +214,6 @@ class Render:
 
     def update(self, render_package: dict) -> ReturnPackage:
         self.return_package = ReturnPackage()
-
         self.game_window.fill("Black")
 
         # Handles keyboard inputs

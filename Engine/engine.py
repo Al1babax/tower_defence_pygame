@@ -31,6 +31,7 @@ class Engine:
         print("\n")
 
     def handle_package(self, return_package: ReturnPackage):
+        # TODO: also needs upgrade tower
         from Engine.tower import Tower
         if return_package.game_over is True:
             self.game.game_running = False
