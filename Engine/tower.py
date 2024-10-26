@@ -37,16 +37,6 @@ towers_template = {
     }
 }
 # TODO: write functions to figure out projectile angle and turret angle
-def euclidean_distance(position: List[int], end_position: List[int]) -> float:
-    return math.sqrt((position[0] - end_position[0]) ** 2 + (position[1] - end_position[1]) ** 2)
-
-def calculate_tower_angle(tower_position: List[int],
-                          enemy_position: List[int],
-                          projectile_speed: int,
-                          enemy_movement_speed: int
-                          ) -> int:
-    pass
-
 
 class Tower:
     def __init__(self, tower_type: str, tower_position: List[int]):
@@ -124,5 +114,5 @@ class Tower:
 
             self.last_shot_frame = cur_frame
 
-            print(f"Shot at enemy! Enemy life left {enemy.hp}")
+            print(f"Shot at enemy! Enemy life left {enemy.current_hp}")
             return enemy if enemy_died else None

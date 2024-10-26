@@ -4,6 +4,7 @@ Engine class that binds all the modules of the engine
 from Engine.game import Game
 from Engine.render import Render, ReturnPackage
 from pygame import time
+from time import perf_counter
 
 
 class Engine:
@@ -13,6 +14,8 @@ class Engine:
         self.game = Game()
         self.render = Render()
         self.clock = time.Clock()
+
+        self.render_times = []
 
     def print_game(self):
         from Engine.level import TerrainBlock
@@ -57,7 +60,15 @@ class Engine:
                 "current_frame": self.game.frame,
                 "level": self.game.level,
             }
+            start = perf_counter()
             return_package: ReturnPackage = self.render.update(render_package)
+            end = perf_counter()
+            self.render_times.append(end - start)
+
+            # Calculate average render time every 60 frames
+            if self.game.frame % 60 == 0:
+                print("Average render time: ", sum(self.render_times) / len(self.render_times))
+                self.render_times = []
 
             # Deal with the package and check up all the evens
             self.handle_package(return_package)

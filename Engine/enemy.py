@@ -155,13 +155,15 @@ def a_star_algorithm(current_position: List[int], terrain: List[List], end_posit
 class Enemy:
     def __init__(self, enemy_type: str):
         self.position = None
+        self.enemy_movement_vector = (0, 0)
         self.enemy_type = enemy_type
 
         # Shortest path for the enemy to follow
         self.shortest_path: List[List[int]] = []
 
         # Init enemy attributes
-        self.hp = template_enemies[enemy_type]["health"]
+        self.max_hp = template_enemies[enemy_type]["health"]
+        self.current_hp = template_enemies[enemy_type]["health"]
         self.speed = template_enemies[enemy_type]["speed"]
         self.money_value = template_enemies[enemy_type]["money_value"]
         self.armor = template_enemies[enemy_type]["armor"]
@@ -177,6 +179,10 @@ class Enemy:
     def calculate_shortest_path(self, terrain: List[List], end_pos: List[int]) -> None:
         # Calculate shortens path and save to self.shortest_path
         self.shortest_path = a_star_algorithm(self.position, terrain, end_pos)
+
+        # Based on where the next shortest path is calculate the movement vector
+        next_block = self.shortest_path[0]
+        self.enemy_movement_vector = (next_block[0] - self.position[0], next_block[1] - self.position[1])
 
     def move_forward(self, terrain: List[List], end_pos: List[List[int]], current_frame: int) -> bool:
         """
@@ -216,11 +222,11 @@ class Enemy:
         total_damage = damage - self.armor
 
         if total_damage > 0:
-            self.hp -= total_damage
-            print(f"Taking {total_damage} damage! HP: {self.hp}")
+            self.current_hp -= total_damage
+            print(f"Taking {total_damage} damage! HP: {self.current_hp}")
 
         # Check if enemy is dead
-        if self.hp <= 0:
+        if self.current_hp <= 0:
             print("Enemy is dead!")
             return True
 
