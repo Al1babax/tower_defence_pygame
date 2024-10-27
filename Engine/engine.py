@@ -17,6 +17,8 @@ class Engine:
 
         self.render_times = []
 
+        self.DEBUG_MODE = True
+
     def print_game(self):
         from Engine.level import TerrainBlock
         from Engine.enemy import Enemy
@@ -48,7 +50,9 @@ class Engine:
         while self.game.game_running:
             if self.game.frame % 60 == 0:
                 print("Frame: ", self.game.frame)
-                # self.print_game()
+
+                if self.DEBUG_MODE:
+                    self.print_game()
 
             # Update loop to run the game
             self.game.update()
@@ -60,18 +64,19 @@ class Engine:
                 "current_frame": self.game.frame,
                 "level": self.game.level,
             }
-            start = perf_counter()
-            return_package: ReturnPackage = self.render.update(render_package)
-            end = perf_counter()
-            self.render_times.append(end - start)
+            if not self.DEBUG_MODE:
+                start = perf_counter()
+                return_package: ReturnPackage = self.render.update(render_package)
+                end = perf_counter()
+                self.render_times.append(end - start)
 
-            # Calculate average render time every 60 frames
-            if self.game.frame % 60 == 0:
-                print("Average render time: ", sum(self.render_times) / len(self.render_times))
-                self.render_times = []
+                # Calculate average render time every 60 frames
+                if self.game.frame % 60 == 0:
+                    print("Average render time: ", sum(self.render_times) / len(self.render_times))
+                    self.render_times = []
 
-            # Deal with the package and check up all the evens
-            self.handle_package(return_package)
+                # Deal with the package and check up all the evens
+                self.handle_package(return_package)
 
             # Create tick rate
             self.clock.tick(60)
