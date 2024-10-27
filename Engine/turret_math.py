@@ -1,12 +1,12 @@
 import math
 
 # Constants for the bullet and enemy path
-BULLET_SPEED = 2
-ENEMY_SPEED = 2  # Speed at which enemy moves between waypoints
-WAYPOINT_DISTANCE = 1  # Fixed distance between waypoints
+# BULLET_SPEED = 2
+# ENEMY_SPEED = 2  # Speed at which enemy moves between waypoints
+# WAYPOINT_DISTANCE = 1  # Fixed distance between waypoints
 
 # Waypoints for the enemy path (each waypoint is spaced 1 unit apart)
-enemy_waypoints = [(0, 2), (1, 2), (1, 3), (2, 4), (3, 4), (4, 4)]  # Example waypoints
+# enemy_waypoints = [(0, 2), (1, 2), (1, 3), (2, 4), (3, 4), (4, 4)]  # Example waypoints
 
 
 def change_coordinate_system(x, y):
@@ -18,6 +18,7 @@ def change_coordinate_system(x, y):
 
 # Function to calculate travel time between each waypoint (constant)
 def calculate_time_per_waypoint(speed):
+    WAYPOINT_DISTANCE = 1
     return WAYPOINT_DISTANCE / speed
 
 
@@ -28,7 +29,7 @@ def calculate_time_to_hit(tx, ty, ex, ey, bullet_speed):
 
 
 # Step 3: Calculate enemy's exact position and velocity vector at t_impact
-def enemy_position_velocity_at_impact(waypoints, time_per_waypoint, t_impact):
+def enemy_position_velocity_at_impact(waypoints, time_per_waypoint, t_impact, enemy_speed):
     elapsed_time = 0
 
     # Iterate through waypoints to find where t_impact lies
@@ -46,7 +47,7 @@ def enemy_position_velocity_at_impact(waypoints, time_per_waypoint, t_impact):
             ey_impact = p1[1] + dy * (time_in_segment / time_per_waypoint)
 
             # Velocity vector in this segment
-            velocity_vector = (dx * ENEMY_SPEED, dy * ENEMY_SPEED)
+            velocity_vector = (dx * enemy_speed, dy * enemy_speed)
             return (ex_impact, ey_impact), velocity_vector
 
         elapsed_time += time_per_waypoint
@@ -70,15 +71,15 @@ def calculate_bullet_velocity(tx, ty, ex, ey, bullet_speed, waypoints, enemy_spe
     # Calculate initial time to hit enemy's starting position
     t_impact = calculate_time_to_hit(tx, ty, ex, ey, bullet_speed)
 
-    print(f"Time to hit: {t_impact}")
+    # print(f"Time to hit: {t_impact}")
 
     # Find the exact position and velocity of the enemy at t_impact
     enemy_impact_pos, enemy_velocity = enemy_position_velocity_at_impact(
-        waypoints, time_per_waypoint, t_impact
+        waypoints, time_per_waypoint, t_impact, enemy_speed
     )
 
-    print(f"Enemy impact position: {enemy_impact_pos}")
-    print(f"Enemy velocity vector: {enemy_velocity}")
+    # print(f"Enemy impact position: {enemy_impact_pos}")
+    # print(f"Enemy velocity vector: {enemy_velocity}")
 
     # Calculate bullet direction based on tower position and enemy impact position
     dx, dy = enemy_impact_pos[0] - tx, enemy_impact_pos[1] - ty
@@ -91,13 +92,13 @@ def calculate_bullet_velocity(tx, ty, ex, ey, bullet_speed, waypoints, enemy_spe
 
 
 # Run calculation with given parameters
-tower_position = (4, 0)
-enemy_position = enemy_waypoints[0]
-
-bullet_velocity = calculate_bullet_velocity(
-    tower_position[0], tower_position[1],
-    enemy_position[0], enemy_position[1],
-    BULLET_SPEED, enemy_waypoints, ENEMY_SPEED
-)
-
-print("Bullet velocity vector:", bullet_velocity)
+# tower_position = (4, 0)
+# enemy_position = enemy_waypoints[0]
+#
+# bullet_velocity = calculate_bullet_velocity(
+#     tower_position[0], tower_position[1],
+#     enemy_position[0], enemy_position[1],
+#     BULLET_SPEED, enemy_waypoints, ENEMY_SPEED
+# )
+#
+# print("Bullet velocity vector:", bullet_velocity)

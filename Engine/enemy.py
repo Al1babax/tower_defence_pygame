@@ -155,7 +155,6 @@ def a_star_algorithm(current_position: List[int], terrain: List[List], end_posit
 class Enemy:
     def __init__(self, enemy_type: str):
         self.position = None
-        self.enemy_movement_vector = (0, 0)
         self.enemy_type = enemy_type
 
         # Shortest path for the enemy to follow
@@ -168,6 +167,8 @@ class Enemy:
         self.money_value = template_enemies[enemy_type]["money_value"]
         self.armor = template_enemies[enemy_type]["armor"]
         self.enemy_asset_path = os.path.join(ENEMY_PATH, template_enemies[enemy_type]["enemy_asset"])
+
+        self.node_speed: int = 60 / self.speed
 
         # TODO: Activate check paths once have some assets
         # if not os.path.exists(self.enemy_asset_path):
@@ -199,6 +200,9 @@ class Enemy:
 
         # Move enemy to the next block
         next_block = self.shortest_path.pop(0)
+
+        # Calculate the movement vector
+        self.enemy_movement_vector = (next_block[0] - self.position[0], next_block[1] - self.position[1])
 
         # Make certain next block is not occupied by another enemy
         if isinstance(terrain[next_block[0]][next_block[1]], Enemy):

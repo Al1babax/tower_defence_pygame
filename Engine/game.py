@@ -40,7 +40,7 @@ class Game:
     def force_spawn_turret_for_testing(self):
         # Force spawn turret for testing
         # Find a terrain block with open turret slot and spawn a turret there
-        position = [10, 3]
+        position = [5, 10]
         new_tower = Tower("standard", position)
         self.level.update(2, current_position=position, tower=new_tower)
 

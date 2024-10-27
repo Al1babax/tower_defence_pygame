@@ -1,6 +1,7 @@
 from typing import Optional, List, Tuple
 import os
 import math
+import Engine.turret_math as turret_math
 
 """
 Class for handling towers attributes and methods:
@@ -20,6 +21,7 @@ towers_template = {
             "range": 3.0,
             "shot_cooldown": 60,
             "damage": 10,
+            "projectile_speed": 5,
             "damage_type": "base",
             "projectile_asset": "",
             "tower_asset": "",
@@ -30,6 +32,7 @@ towers_template = {
             "range": 4.0,
             "shot_cooldown": 50,
             "damage": 15,
+            "projectile_speed": 5,
             "damage_type": "base",
             "projectile_asset": "",
             "tower_asset": "",
@@ -49,6 +52,7 @@ class Tower:
         self.cost: int = 0
         self.range: float = 0
         self.shot_cooldown: int = 0
+        self.projectile_speed: int = 0
         self.damage: int = 0
         self.damage_type: int = 0
         self.rotation: int = 90
@@ -62,6 +66,9 @@ class Tower:
         # Frame corresponding to the latest shot
         self.last_shot_frame = 0
 
+        # Testing purposes
+        self.bullet_vector = (0, 0)
+
     def set_tower_properties(self):
         self.hp = towers_template[self.type][self.tower_level]["hp"]
         self.cost = towers_template[self.type][self.tower_level]["cost"]
@@ -69,6 +76,7 @@ class Tower:
         self.shot_cooldown = towers_template[self.type][self.tower_level]["shot_cooldown"]
         self.damage = towers_template[self.type][self.tower_level]["damage"]
         self.damage_type = towers_template[self.type][self.tower_level]["damage_type"]
+        self.projectile_speed = towers_template[self.type][self.tower_level]["projectile_speed"]
 
         self.projectile_asset_path = os.path.join(PROJECTILE_PATH,
                                                   towers_template[self.type][self.tower_level]["projectile_asset"])
@@ -108,6 +116,19 @@ class Tower:
             dist_to_enemy = math.sqrt(row_dist ** 2 + col_dist ** 2)
             if dist_to_enemy > self.range:
                 continue
+
+            # If enemy in range calculate the angle for turret and bullet vector
+            bullet_vector = turret_math.calculate_bullet_velocity(
+                tx=self.position[0],
+                ty=self.position[1],
+                ex=enemy.position[0],
+                ey=enemy.position[1],
+                bullet_speed=self.projectile_speed,
+                waypoints=enemy.shortest_path,
+                enemy_speed=enemy.node_speed
+            )
+            # print(f"Bullet vector: {bullet_vector}")
+            self.bullet_vector = bullet_vector
 
             # If an enemy is shot, cooldown starts over and we exit the loop
             enemy_died: bool = enemy.take_damage(self.damage)

@@ -66,23 +66,23 @@ class Level:
     def create_terrain(self):
         # Create terrain based on the level design
         # For now create a simple terrain for testing and dev purposes
-        # 20x10 grid with straight path from top to bottom for enemies, and some tower placements
+        # 10x20 grid with straight path from top to bottom for enemies, and some tower placements
         # Static blocks to make the path
         # Only one start and end block
-        for i in range(20):
-            self.terrain.append([TerrainBlock(2) for _ in range(10)])
+        for i in range(10):
+            self.terrain.append([TerrainBlock(2) for _ in range(20)])
 
         # Place path for enemies in the middle
         for i in range(20):
-            self.terrain[i][4] = TerrainBlock(0)
+            self.terrain[4][i] = TerrainBlock(0)
 
         # Save start and end block positions
-        self.start_blocks.append([0, 4])
-        self.end_blocks.append([19, 4])
+        self.start_blocks.append([4, 0])
+        self.end_blocks.append([4, 19])
 
         # Place some tower placements next to the path
-        self.terrain[10][3] = TerrainBlock(1)
-        self.terrain[10][5] = TerrainBlock(1)
+        self.terrain[3][10] = TerrainBlock(1)
+        self.terrain[5][10] = TerrainBlock(1)
 
     def print_terrain(self):
         for row in self.terrain:

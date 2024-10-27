@@ -133,8 +133,11 @@ class Render:
         from Engine.enemy import Enemy
         from Engine.tower import Tower
 
+        # TODO: Maybe create the terrain going left to right to begin with and then no rotation would be needed
+        # TODO: this would also make it easier to not have two coordinate systems
         # Rotate the terrain matrix so enemies move left to right
-        rotated_terrain = self.rotate_terrain(level.terrain)
+        # rotated_terrain = self.rotate_terrain(level.terrain)
+        rotated_terrain = level.terrain
 
         self.block_size = min(self.screen_width // len(rotated_terrain[0]), self.screen_height // len(rotated_terrain))
 
@@ -243,6 +246,18 @@ class Render:
         # Update various elements on screen
         self.render_game(render_package["level"])
         pygame.display.update()
+
+        # Draw shooting line
+        turret_pos = render_package["level"].towers[0].position
+        bullet_vector = render_package["level"].towers[0].bullet_vector
+
+        pygame.draw.line(self.game_window, "Red", (
+        turret_pos[1] * self.block_size + self.block_size // 2, turret_pos[0] * self.block_size + self.block_size // 2),
+                         (turret_pos[1] * self.block_size + self.block_size // 2 + bullet_vector[
+                             1] * self.block_size * 2,
+                          turret_pos[0] * self.block_size + self.block_size // 2 + bullet_vector[
+                              0] * self.block_size * 2), width=2)
+
         return self.return_package
 
     def close_window(self):
