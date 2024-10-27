@@ -17,7 +17,7 @@ class Engine:
 
         self.render_times = []
 
-        self.DEBUG_MODE = True
+        self.DEBUG_MODE = False
 
     def print_game(self):
         from Engine.level import TerrainBlock

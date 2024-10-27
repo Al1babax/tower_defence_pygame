@@ -130,6 +130,20 @@ class Tower:
             # print(f"Bullet vector: {bullet_vector}")
             self.bullet_vector = bullet_vector
 
+            # Calculate the angle for turret
+            # Eucledian distance between tower and enemy
+            tower_x, tower_y = self.position[0], self.position[1]
+            enemy_x, enemy_y = enemy.position[0], enemy.position[1]
+            dx, dy = enemy_x - tower_x, enemy_y - tower_y
+            dist_to_enemy = math.sqrt(dx ** 2 + dy ** 2)
+
+            # Distance to enemy is the same as hypothenuse of the triangle
+            right_side_distance = 1
+            # Calculate the angle assuming 0 degrees is straight up
+            angle = math.degrees(math.acos(dy / dist_to_enemy))
+            print(f"Angle: {angle}")
+            self.rotation = angle
+
             # If an enemy is shot, cooldown starts over and we exit the loop
             enemy_died: bool = enemy.take_damage(self.damage)
 

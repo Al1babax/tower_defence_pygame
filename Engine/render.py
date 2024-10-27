@@ -84,6 +84,9 @@ class Sprite:
         self.init_sprite()
 
     def rotate_sprite(self, angle: int):
+        # First rotate to neutral position
+        self.sprite_object = pygame.transform.rotate(self.sprite_object, -angle)
+
         self.sprite_object = pygame.transform.rotate(self.sprite_object, angle)
 
 
@@ -248,15 +251,15 @@ class Render:
         pygame.display.update()
 
         # Draw shooting line
-        turret_pos = render_package["level"].towers[0].position
-        bullet_vector = render_package["level"].towers[0].bullet_vector
-
-        pygame.draw.line(self.game_window, "Red", (
-        turret_pos[1] * self.block_size + self.block_size // 2, turret_pos[0] * self.block_size + self.block_size // 2),
-                         (turret_pos[1] * self.block_size + self.block_size // 2 + bullet_vector[
-                             1] * self.block_size * 2,
-                          turret_pos[0] * self.block_size + self.block_size // 2 + bullet_vector[
-                              0] * self.block_size * 2), width=2)
+        # turret_pos = render_package["level"].towers[0].position
+        # bullet_vector = render_package["level"].towers[0].bullet_vector
+        #
+        # pygame.draw.line(self.game_window, "Red", (
+        # turret_pos[1] * self.block_size + self.block_size // 2, turret_pos[0] * self.block_size + self.block_size // 2),
+        #                  (turret_pos[1] * self.block_size + self.block_size // 2 + bullet_vector[
+        #                      1] * self.block_size * 2,
+        #                   turret_pos[0] * self.block_size + self.block_size // 2 + bullet_vector[
+        #                       0] * self.block_size * 2), width=2)
 
         return self.return_package
 
