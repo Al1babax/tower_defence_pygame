@@ -8,6 +8,15 @@ import pygame
 Class to render the game to the screen
 """
 
+# TODO: Figure out why enemies not showing
+# TODO: Health bars for enemies
+# TODO: Show lives and money
+# TODO: Rotate the tower sprite to point towards the enemy
+# TODO: Render the bullet of the tower
+# TODO: Features to add: upgrade tower, sell tower, buy tower
+# TODO: menu to start new game, pause game, exit game
+
+
 # TODO: Move all these to config file
 CAPTION_TEXT = "Tower Defense"
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
