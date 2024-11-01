@@ -1,8 +1,8 @@
 import json
 from dataclasses import dataclass
 from typing import Optional, Tuple, List
-
 import pygame
+
 
 """
 Class to render the game to the screen
@@ -28,7 +28,6 @@ with open("Engine/sprite_map.json", "r") as file:
     sprite_map = json.load(file)
 
 sprite_sheet = pygame.image.load("Assets/main.png")
-
 
 class Sprite:
     def __init__(
@@ -98,7 +97,6 @@ class Sprite:
 
         self.sprite_object = pygame.transform.rotate(self.sprite_object, angle)
 
-
 @dataclass
 class ReturnPackage:
     game_over: bool = False
@@ -116,9 +114,11 @@ class Render:
         self.screen_rect = None
 
         self.return_package: Optional[ReturnPackage] = None
-        self.sprite_dict = {}
 
-        self.previous_terrain = []
+        self.sprite_dict = {}
+        self.terrain_dict = {}
+        self.updated_terrain = False
+
         self.block_size: int = 0
 
         # Get the game window to show up
@@ -145,80 +145,56 @@ class Render:
         from Engine.enemy import Enemy
         from Engine.tower import Tower
 
-        # TODO: Maybe create the terrain going left to right to begin with and then no rotation would be needed
-        # TODO: this would also make it easier to not have two coordinate systems
-        # Rotate the terrain matrix so enemies move left to right
-        # rotated_terrain = self.rotate_terrain(level.terrain)
-        rotated_terrain = level.terrain
-
-        self.block_size = min(self.screen_width // len(rotated_terrain[0]), self.screen_height // len(rotated_terrain))
+        # TODO: move this, so we do it only once
+        self.block_size = min(self.screen_width // len(level.terrain[0]), self.screen_height // len(level.terrain))
 
         # List of towers, to show each tower's shooting range
         tower_list = []
 
-        # Display terrain map on screen: 0 = enemy, 1 = tower, 2 = static block
-        # TODO: Maybe better if sprites are created only once for each tile and only changed if needed vs created every frame
-        # TODO: Save previous terrain and compare if changed to only update changed tiles/objects
+        # Sprite info
+        sprite_category = ""
+        sprite_type = ""
+        enemy_action = ""
+        tower_level = ""
+        size = (self.block_size, self.block_size)
 
-        saved_previous_terrain = False
-        if not self.previous_terrain:
-            self.previous_terrain = rotated_terrain
-            saved_previous_terrain = True
-
-        for i, row in enumerate(rotated_terrain):
+        for i, row in enumerate(level.terrain):
             for j, sq in enumerate(row):
 
-                # If previous frame block is the same as current block
-                if not saved_previous_terrain and sq == self.previous_terrain[i][j]:
-                    sq_sprite = self.sprite_dict[(i, j)]
+                # If previous block = current block, skip it
+                if self.updated_terrain and self.terrain_dict[(i, j)] == sq:
+                    # TODO: circle ?
                     continue
 
-                else:
+                # Prepare relevant sprite info to be displayed
+                if isinstance(sq, TerrainBlock):
+                    if sq.block_type == 0:  # Enemy path
+                        sprite_category = "ground"
+                        sprite_type = "dirt"
+                    if sq.block_type == 1:  # Empty tower block
+                        sprite_category = "ground"
+                        sprite_type = "tower"
+                    if sq.block_type == 2:  # Static block
+                        sprite_category = "ground"
+                        sprite_type = "grass"
+                elif isinstance(sq, Enemy):
+                    sprite_category = "enemies"
+                    sprite_type = "normal"
+                    enemy_action = "run"
+                elif isinstance(sq, Tower):
+                    sprite_category = "towers"
+                    sprite_type = "normal"
+                    tower_level = "0"
 
-                    sq_color = ""
-                    # Sprite info
-                    sprite_category = ""
-                    sprite_type = ""
-                    enemy_action = ""
-                    tower_level = ""
-                    size = (self.block_size, self.block_size)
+                # Create current sprite, and save it to sprite dictionary
+                sq_sprite = Sprite(sprite_category=sprite_category, sprite_type=sprite_type,
+                                   enemy_action=enemy_action,
+                                   tower_level=tower_level, size=size)
 
-                    if isinstance(sq, TerrainBlock):
-                        if sq.block_type == 0:  # Enemy path
-                            sq_color = "antiquewhite4"
-                            sprite_category = "ground"
-                            sprite_type = "dirt"
-                        if sq.block_type == 1:  # Empty tower block
-                            sq_color = "White"
-                            sprite_category = "ground"
-                            sprite_type = "tower"
-                        if sq.block_type == 2:  # Static block
-                            sq_color = "azure3"
-                            sprite_category = "ground"
-                            sprite_type = "grass"
-                    elif isinstance(sq, Enemy):
-                        sq_color = "Red"  # Enemy block
-                        sprite_category = "enemies"
-                        sprite_type = "normal"
-                        enemy_action = "run"
-                    elif isinstance(sq, Tower):
-                        sq_color = "Blue"  # Tower block
-                        sprite_category = "towers"
-                        sprite_type = "normal"
-                        tower_level = "0"
+                self.sprite_dict[(i, j)] = sq_sprite
+                self.terrain_dict[(i, j)] = sq
 
-                    # Create current sprite, and save it to sprite dictionary
-                    sq_sprite = Sprite(sprite_category=sprite_category, sprite_type=sprite_type,
-                                       enemy_action=enemy_action,
-                                       tower_level=tower_level, size=size)
-
-                    self.sprite_dict[(i, j)] = sq_sprite
-                    self.previous_terrain[i][j] = sq
-
-                # Highlight player base in green
                 # TODO: Highlight player base in some way, but only once
-                # if [j, len(rotated_terrain) - 1 - i] in level.end_blocks:
-                #     sq_color = "Green"
 
                 # Create rectangle as container for the sprite
                 sq_rect = pygame.Rect(SCREEN_X_POS + (j * self.block_size), SCREEN_Y_POS + (i * self.block_size),
@@ -231,9 +207,13 @@ class Render:
                 if isinstance(sq, Tower):
                     tower_list.append([sq, sq_rect, "Blue"])
 
+        self.updated_terrain = True
+
         # For each tower placed, show shooting range
         for tower, tower_rect, tower_color in tower_list:
             pygame.draw.circle(self.game_window, tower_color, tower_rect.center, tower.range * self.block_size, width=1)
+
+
 
     def get_keyboard_input(self):
         key_pressed = pygame.key.get_pressed()
