@@ -51,6 +51,7 @@ class Sprite:
     def extract_sprite(self, sprite_sheet: pygame.Surface, x: int, y: int) -> pygame.Surface:
         sprite = pygame.Surface((16, 16))
         sprite.blit(sprite_sheet, (0, 0), (x * 16, y * 16, 16, 16))
+        sprite.set_colorkey((0, 0, 0))
         return sprite
 
     def init_sprite(self):
@@ -316,9 +317,8 @@ class Render:
 
         self.game_window.blit(self.background.get_background(), (SCREEN_X_POS, SCREEN_Y_POS))
 
-        # Draw a single sprite to the middle of the screen
-        # enemy_sprite = Sprite("enemies", "normal", "run")
-        # self.game_window.blit(enemy_sprite.get_sprite(), (SCREEN_X_POS + 100, SCREEN_Y_POS + 100))
+        enemy_sprite = Sprite("enemies", "normal", "run")
+        self.game_window.blit(enemy_sprite.get_sprite(), (SCREEN_X_POS + 100, SCREEN_Y_POS + 230))
 
         # Update various elements on screen
         # self.render_game(render_package["level"])
