@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Optional, Tuple, List
 import pygame
 
-
 """
 Class to render the game to the screen
 """
@@ -28,6 +27,7 @@ with open("Engine/sprite_map.json", "r") as file:
     sprite_map = json.load(file)
 
 sprite_sheet = pygame.image.load("Assets/main.png")
+
 
 class Sprite:
     def __init__(
@@ -92,10 +92,64 @@ class Sprite:
         self.init_sprite()
 
     def rotate_sprite(self, angle: int):
-        # First rotate to neutral position
-        self.sprite_object = pygame.transform.rotate(self.sprite_object, -angle)
-
         self.sprite_object = pygame.transform.rotate(self.sprite_object, angle)
+
+
+class Background:
+    """ Class to make the background of the game sprites"""
+
+    def __init__(self, object_terrain: List[List[object]]):
+        self.bg_width = SCREEN_WIDTH
+        self.bg_height = SCREEN_HEIGHT
+
+        self.bg: pygame.Surface = pygame.Surface((self.bg_width, self.bg_height))
+        self.object_terrain = object_terrain
+        self.block_size = self.calculate_block_size()
+
+    def calculate_block_size(self):
+        block_size_x = self.bg_width // len(self.object_terrain[0])
+        block_size_y = self.bg_height // len(self.object_terrain)
+        return min(block_size_x, block_size_y)
+
+
+    def construct_sprite_matrix(self) -> List[List[Sprite]]:
+        from Engine.level import TerrainBlock
+
+        object_sprite_map = {
+            0: ["ground", "dirt"],
+            1: ["ground", "tower"],
+            2: ["ground", "grass"],
+        }
+
+        sprite_matrix = []
+        for row in self.object_terrain:
+            sprite_row = []
+            for sprite_object in row:
+                if isinstance(sprite_object, TerrainBlock):
+                    sprite_category, sprite_type = object_sprite_map[sprite_object.block_type]
+                    sprite = Sprite(sprite_category, sprite_type)
+                    sprite_row.append(sprite)
+                else:
+                    # Just render grass for now
+                    sprite = Sprite("ground", "grass")
+                    sprite_row.append(sprite)
+
+            sprite_matrix.append(sprite_row)
+
+        return sprite_matrix
+
+    def construct_background(self, sprite_matrix: List[List[Sprite]]):
+        for y, row in enumerate(sprite_matrix):
+            for x, sprite in enumerate(row):
+                self.bg.blit(sprite.get_sprite(), (x * self.block_size, y * self.block_size))
+
+    def create_background(self):
+        sprite_matrix = self.construct_sprite_matrix()
+        self.construct_background(sprite_matrix)
+
+    def get_background(self):
+        return self.bg
+
 
 @dataclass
 class ReturnPackage:
@@ -123,6 +177,23 @@ class Render:
 
         # Get the game window to show up
         self.create_game_window()
+
+        # Make background object
+        self.background: Optional[Background] = None
+
+    def turn_tower(self, tower, sprite: Sprite):
+        from Engine.tower import Tower
+        tower: Tower = tower
+
+        # Get the current angle and rotate back to 0
+        old_angle = tower.old_rotation
+        sprite.rotate_sprite(-old_angle)
+
+        # Now rotate to the new angle
+        new_angle = tower.new_rotation
+        sprite.rotate_sprite(new_angle)
+
+        return sprite
 
     def create_game_window(self):
         # Imports all pygame modules
@@ -162,7 +233,7 @@ class Render:
             for j, sq in enumerate(row):
 
                 # If previous block = current block, skip it
-                if self.updated_terrain and self.terrain_dict[(i, j)] == sq:
+                if self.updated_terrain and self.terrain_dict[(i, j)] == sq and not (isinstance(sq, Tower)):
                     # TODO: circle ?
                     continue
 
@@ -191,6 +262,11 @@ class Render:
                                    enemy_action=enemy_action,
                                    tower_level=tower_level, size=size)
 
+                # If the sprite is a tower handle rotation
+                if isinstance(sq, Tower):
+                    sq_sprite = self.turn_tower(sq, sq_sprite)
+                    print(sq.old_rotation, sq.new_rotation)
+
                 self.sprite_dict[(i, j)] = sq_sprite
                 self.terrain_dict[(i, j)] = sq
 
@@ -213,8 +289,6 @@ class Render:
         for tower, tower_rect, tower_color in tower_list:
             pygame.draw.circle(self.game_window, tower_color, tower_rect.center, tower.range * self.block_size, width=1)
 
-
-
     def get_keyboard_input(self):
         key_pressed = pygame.key.get_pressed()
         if key_pressed[pygame.K_ESCAPE]:
@@ -227,7 +301,7 @@ class Render:
 
     def update(self, render_package: dict) -> ReturnPackage:
         self.return_package = ReturnPackage()
-        # self.game_window.fill("Black")
+        self.game_window.fill("Red")
 
         # Handles keyboard inputs
         self.get_keyboard_input()
@@ -235,8 +309,19 @@ class Render:
         # Handles pygame events
         self.handle_events()
 
+        # Create background if it is not created
+        if self.background is None:
+            self.background = Background(render_package["level"].terrain)
+            self.background.create_background()
+
+        self.game_window.blit(self.background.get_background(), (SCREEN_X_POS, SCREEN_Y_POS))
+
+        # Draw a single sprite to the middle of the screen
+        # enemy_sprite = Sprite("enemies", "normal", "run")
+        # self.game_window.blit(enemy_sprite.get_sprite(), (SCREEN_X_POS + 100, SCREEN_Y_POS + 100))
+
         # Update various elements on screen
-        self.render_game(render_package["level"])
+        # self.render_game(render_package["level"])
         pygame.display.update()
 
         # Draw shooting line
