@@ -55,8 +55,7 @@ class Tower:
         self.projectile_speed: int = 0
         self.damage: int = 0
         self.damage_type: int = 0
-        self.new_rotation: int = 90
-        self.old_rotation: int = 90
+        self.angle: int = 90
 
         # Paths for Tower and Projectiles assets
         self.projectile_asset_path = ""
@@ -143,8 +142,7 @@ class Tower:
             # Calculate the angle assuming 0 degrees is straight up
             angle = math.degrees(math.acos(dy / dist_to_enemy))
             print(f"Angle: {angle}")
-            self.old_rotation = self.new_rotation
-            self.new_rotation = angle
+            self.angle = angle
 
             # If an enemy is shot, cooldown starts over and we exit the loop
             enemy_died: bool = enemy.take_damage(self.damage)

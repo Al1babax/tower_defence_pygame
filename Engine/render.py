@@ -52,12 +52,12 @@ class Sprite:
         self.current_animation = 0
 
         self.sprite_object: Optional[pygame.Surface] = None
+        self.rotated_sprite_object: Optional[pygame.Surface] = None
         self.init_sprite()
 
     def extract_sprite(self, sprite_sheet: pygame.Surface, x: int, y: int) -> pygame.Surface:
-        sprite = pygame.Surface((16, 16))
+        sprite = pygame.Surface((16, 16), pygame.SRCALPHA)
         sprite.blit(sprite_sheet, (0, 0), (x * 16, y * 16, 16, 16))
-        sprite.set_colorkey((0, 0, 0))
         return sprite
 
     def init_sprite(self):
@@ -71,6 +71,7 @@ class Sprite:
         sprite = pygame.transform.scale(sprite, self.size)
 
         self.sprite_object = sprite
+        self.rotated_sprite_object = sprite
 
     def get_sprite(self):
         return self.sprite_object
@@ -99,7 +100,8 @@ class Sprite:
         self.init_sprite()
 
     def rotate_sprite(self, angle: int):
-        self.sprite_object = pygame.transform.rotate(self.sprite_object, angle)
+        #TODO: Fix the pivot point for rotation so that the sprite does not move on rotation
+        self.rotated_sprite_object = pygame.transform.rotate(self.rotated_sprite_object, angle)
 
 
 class Background:
@@ -176,22 +178,27 @@ class Render:
 
         self.block_size: int = calculate_block_size()
 
+        self.lives: int = 0
+        self.lives_font: object = None
+        self.lives_text: object = None
+        self.money: int = 0
+        self.money_font: object = None
+        self.money_text: object = None
+
         # Get the game window to show up
         self.create_game_window()
 
         # Make background object
         self.background: Optional[Background] = None
 
+        self.temp_tower = Sprite("towers", "normal", tower_level="0")
+
     def turn_tower(self, tower, sprite: Sprite):
         from Engine.tower import Tower
         tower: Tower = tower
 
-        # Get the current angle and rotate back to 0
-        old_angle = tower.old_rotation
-        sprite.rotate_sprite(-old_angle)
-
         # Now rotate to the new angle
-        new_angle = tower.new_rotation
+        new_angle = tower.angle
         sprite.rotate_sprite(new_angle)
 
         return sprite
@@ -212,23 +219,94 @@ class Render:
         rotated_terrain = [[row[j] for row in vertical_terrain] for j in range(row_len - 1, -1, -1)]
         return rotated_terrain
 
-    def render_enemies(self, enemy_objects: List[object]):
-        pass
+    def draw_health_bar(self, enemy):
 
-    def render_towers(self, tower_objects: List[object]):
-        pass
+        health_bar_width = int((enemy.current_hp / enemy.max_hp) * self.block_size)
+        health_bar_height = self.block_size // 6
 
-    def render_game(self, enemy_objects: List[object], tower_objects: List[object]):
+        health_bar_x_pos = SCREEN_X_POS + (enemy.position[1] * self.block_size)
+        health_bar_y_pos = SCREEN_Y_POS + (enemy.position[0] * self.block_size)
+        health_rect = pygame.Rect(health_bar_x_pos, health_bar_y_pos, health_bar_width, health_bar_height)
+
+        return health_rect
+
+    def render_enemies(self, enemies: List[object]):
+        from Engine.enemy import Enemy
+        enemies: List[Enemy] = enemies
+
+        sprite_category = "enemies"
+
+        for enemy in enemies:
+            sprite_type = "normal"
+            enemy_action = "run"
+
+            enemy_sprite = Sprite(sprite_category=sprite_category, sprite_type=sprite_type, enemy_action=enemy_action,
+                                  size=(self.block_size, self.block_size))
+
+            enemy_x_pos = self.block_size * enemy.position[1] + SCREEN_X_POS
+            enemy_y_pos = self.block_size * enemy.position[0] + SCREEN_Y_POS
+
+            self.game_window.blit(enemy_sprite.get_sprite(), (enemy_x_pos, enemy_y_pos))
+
+            health_bar = self.draw_health_bar(enemy)
+
+            pygame.draw.rect(self.game_window, "Red", health_bar)
+
+    def render_towers(self, towers: List[object]):
+        from Engine.tower import Tower
+        towers: List[Tower] = towers
+
+        sprite_category = "towers"
+
+        for tower in towers:
+            sprite_type = "normal"
+            tower_level = str(tower.tower_level)
+
+            tower_sprite = Sprite(sprite_category=sprite_category, sprite_type=sprite_type, tower_level=tower_level,
+                                  size=(self.block_size, self.block_size))
+
+            # Check turret rotation
+            tower_sprite = self.turn_tower(tower, tower_sprite)
+
+            tower_x_pos = self.block_size * tower.position[1] + SCREEN_X_POS
+            tower_y_pos = self.block_size * tower.position[0] + SCREEN_Y_POS
+
+            self.game_window.blit(tower_sprite.rotated_sprite_object, (tower_x_pos, tower_y_pos))
+
+            tower_center_pos = (tower_x_pos + self.block_size // 2, tower_y_pos + self.block_size // 2)
+
+            pygame.draw.circle(self.game_window, "Blue", tower_center_pos, tower.range * self.block_size, width=1)
+
+    def render_player_info(self, cur_lives, cur_money):
+        if not self.lives and not self.money:
+            self.lives_font = pygame.font.Font(None, self.block_size // 2)
+            self.money_font = pygame.font.Font(None, self.block_size // 2)
+
+        self.lives = cur_lives
+        self.money = cur_money
+
+        # Display current lives and gold
+        self.lives_text = self.lives_font.render(f"Lives : {self.lives}", True, "Red")
+        self.money_text = self.money_font.render(f"Gold : {self.money}", True, "darkgoldenrod1")
+
+        # TODO: Draw a rectangle where money and lives will be displayed so it is easier to read
+
+        self.game_window.blit(self.lives_text, (self.block_size, self.block_size // 2))
+        self.game_window.blit(self.money_text, (self.block_size, self.block_size))
+
+    def render_game(self, render_package: dict):
         # Render enemies
-        self.render_enemies(enemy_objects)
+        enemy_list = render_package["level"].enemies
+        self.render_enemies(enemy_list)
 
-        # Render towers
-        self.render_towers(tower_objects)
+        # Render towers, and their current shooting range
+        tower_list = render_package["level"].towers
+        self.render_towers(tower_list)
 
-        # Render shooting range for towers
-        # For each tower placed, show shooting range
-        for tower, tower_rect, tower_color in tower_list:
-            pygame.draw.circle(self.game_window, tower_color, tower_rect.center, tower.range * self.block_size, width=1)
+        # Render current lives and money
+        cur_lives = render_package["lives"]
+        cur_money = render_package["money"]
+        self.render_player_info(cur_lives, cur_money)
 
     def get_keyboard_input(self):
         key_pressed = pygame.key.get_pressed()
@@ -260,20 +338,12 @@ class Render:
         # enemy_sprite = Sprite("enemies", "normal", "run")
         # self.game_window.blit(enemy_sprite.get_sprite(), (SCREEN_X_POS + 100, SCREEN_Y_POS + 230))
 
-        # Update various elements on screen
-        self.render_game(render_package["level"].towers, render_package["level"].enemies)
-        pygame.display.update()
+        # self.game_window.blit(self.temp_tower.get_sprite(), (SCREEN_X_POS + 100, SCREEN_Y_POS + 230))
+        # self.temp_tower.rotate_sprite(1)
 
-        # Draw shooting line
-        # turret_pos = render_package["level"].towers[0].position
-        # bullet_vector = render_package["level"].towers[0].bullet_vector
-        #
-        # pygame.draw.line(self.game_window, "Red", (
-        # turret_pos[1] * self.block_size + self.block_size // 2, turret_pos[0] * self.block_size + self.block_size // 2),
-        #                  (turret_pos[1] * self.block_size + self.block_size // 2 + bullet_vector[
-        #                      1] * self.block_size * 2,
-        #                   turret_pos[0] * self.block_size + self.block_size // 2 + bullet_vector[
-        #                       0] * self.block_size * 2), width=2)
+        # Update various elements on screen
+        self.render_game(render_package)
+        pygame.display.update()
 
         return self.return_package
 
