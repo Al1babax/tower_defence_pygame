@@ -7,9 +7,6 @@ import pygame
 Class to render the game to the screen
 """
 
-# TODO: Figure out why enemies not showing
-# TODO: Health bars for enemies
-# TODO: Show lives and money
 # TODO: Rotate the tower sprite to point towards the enemy
 # TODO: Render the bullet of the tower
 # TODO: Features to add: upgrade tower, sell tower, buy tower
@@ -99,9 +96,13 @@ class Sprite:
 
         self.init_sprite()
 
-    def rotate_sprite(self, angle: int):
-        #TODO: Fix the pivot point for rotation so that the sprite does not move on rotation
-        self.rotated_sprite_object = pygame.transform.rotate(self.rotated_sprite_object, angle)
+    def rotate_sprite(self, angle: int) -> pygame.Rect:
+        # First rotate the object then get the previous center point because
+        # when the rect of the sprite is rotated anything else than 90 degrees it cannot fit into original rect
+        # And thus will be off centered: max off center is square root of 2 times the original rect
+        self.rotated_sprite_object = pygame.transform.rotate(self.sprite_object, angle)
+        original_rect = self.sprite_object.get_rect()
+        return self.rotated_sprite_object.get_rect(center=original_rect.center)
 
 
 class Background:
@@ -193,15 +194,21 @@ class Render:
 
         self.temp_tower = Sprite("towers", "normal", tower_level="0")
 
-    def turn_tower(self, tower, sprite: Sprite):
+    def turn_tower(self, tower, sprite: Sprite) -> Tuple[Sprite, pygame.Rect]:
+        """
+        Turns the tower then returns the sprite and the new x,y position needed for correct alignment
+        :param tower:
+        :param sprite:
+        :return:
+        """
         from Engine.tower import Tower
         tower: Tower = tower
 
         # Now rotate to the new angle
         new_angle = tower.angle
-        sprite.rotate_sprite(new_angle)
+        rotated_rect = sprite.rotate_sprite(new_angle)
 
-        return sprite
+        return sprite, rotated_rect
 
     def create_game_window(self):
         # Imports all pygame modules
@@ -266,12 +273,16 @@ class Render:
                                   size=(self.block_size, self.block_size))
 
             # Check turret rotation
-            tower_sprite = self.turn_tower(tower, tower_sprite)
+            tower_sprite, rotated_rect = self.turn_tower(tower, tower_sprite)
 
             tower_x_pos = self.block_size * tower.position[1] + SCREEN_X_POS
             tower_y_pos = self.block_size * tower.position[0] + SCREEN_Y_POS
 
-            self.game_window.blit(tower_sprite.rotated_sprite_object, (tower_x_pos, tower_y_pos))
+            # TODO: If condition might not be needed because rotated_rect is never None
+            if rotated_rect is not None:
+                self.game_window.blit(tower_sprite.rotated_sprite_object, (tower_x_pos + rotated_rect.topleft[0], tower_y_pos + rotated_rect.topleft[1]))
+            else:
+                self.game_window.blit(tower_sprite.rotated_sprite_object, (tower_x_pos, tower_y_pos))
 
             tower_center_pos = (tower_x_pos + self.block_size // 2, tower_y_pos + self.block_size // 2)
 
@@ -338,8 +349,8 @@ class Render:
         # enemy_sprite = Sprite("enemies", "normal", "run")
         # self.game_window.blit(enemy_sprite.get_sprite(), (SCREEN_X_POS + 100, SCREEN_Y_POS + 230))
 
-        # self.game_window.blit(self.temp_tower.get_sprite(), (SCREEN_X_POS + 100, SCREEN_Y_POS + 230))
-        # self.temp_tower.rotate_sprite(1)
+        # self.game_window.blit(self.temp_tower.rotated_sprite_object, (SCREEN_X_POS + 100, SCREEN_Y_POS + 230))
+        # self.temp_tower.rotate_sprite(90)
 
         # Update various elements on screen
         self.render_game(render_package)
