@@ -32,7 +32,7 @@ class Level:
         # Define waves of enemies (Later defined on a separate file)
         self.waves = {
             0: {
-                "normal": 5,
+                "normal": 2,
                 "buff": 0
             },
             1: {
@@ -223,6 +223,7 @@ class Level:
 
         # Save enemy position
         enemy.previous_waypoint = random_start
+        enemy.real_position = random_start
 
         # Add enemy to the list of enemies
         self.enemies.append(enemy)

@@ -7,6 +7,8 @@ import os
 File for enemy classes and logic.
 Currently, enemies cannot overlap so speed is not a factor.
 """
+# TODO: Enemy movement vector or real position has to be calculate differently, currently with slow speed goes through walls
+# TODO: The movement vector is not calculate correctly, somehow it is bigger than 1
 
 ENEMY_PATH = "assets/enemies"
 
@@ -154,6 +156,7 @@ def a_star_algorithm(current_position: List[int], terrain: List[List], end_posit
 # General Enemy class with shared actions
 class Enemy:
     def __init__(self, enemy_type: str):
+        self.movement_vector: Optional[List[int]] = None
         self.enemy_type = enemy_type
 
         # Shortest path for the enemy to follow
@@ -186,7 +189,14 @@ class Enemy:
 
         # Based on where the next shortest path is calculate the movement vector
         next_block = self.shortest_path[0]
-        self.enemy_movement_vector = (next_block[0] - self.previous_waypoint[0], next_block[1] - self.previous_waypoint[1])
+        self.movement_vector = (next_block[0] - self.previous_waypoint[0], next_block[1] - self.previous_waypoint[1])
+
+    def real_position_change(self):
+        # print(F"Movement vector: {self.enemy_movement_vector}")
+        enemy_movement_unit_vector = (self.movement_vector[0] / self.speed, self.movement_vector[1] / self.speed)
+
+        # Real position change based on enemy movement vector
+        self.real_position = (self.real_position[0] + enemy_movement_unit_vector[0], self.real_position[1] + enemy_movement_unit_vector[1])
 
     def move_forward(self, terrain: List[List], end_pos: List[List[int]], current_frame: int) -> bool:
         """
@@ -196,6 +206,8 @@ class Enemy:
         :param terrain:
         :return: True if enemy reaches the end block and False otherwise
         """
+        self.real_position_change()
+
         # Make certain that enemy can move, use movement_speed of the enemy and frame difference
         # Use last move frame to calculate the time difference
         if current_frame - self.last_move_frame < self.speed:
@@ -206,7 +218,7 @@ class Enemy:
         next_block = self.shortest_path.pop(0)
 
         # Calculate the movement vector
-        self.enemy_movement_vector = (next_block[0] - self.previous_waypoint[0], next_block[1] - self.previous_waypoint[1])
+        self.movement_vector = (next_block[0] - self.previous_waypoint[0], next_block[1] - self.previous_waypoint[1])
 
         # Make certain next block is not occupied by another enemy
         if isinstance(terrain[next_block[0]][next_block[1]], Enemy):

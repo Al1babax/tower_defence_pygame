@@ -133,7 +133,7 @@ class Tower:
             # Calculate the angle for turret
             # Eucledian distance between tower and enemy
             tower_x, tower_y = self.position[0], self.position[1]
-            enemy_x, enemy_y = enemy.previous_waypoint[0], enemy.previous_waypoint[1]
+            enemy_x, enemy_y = enemy.real_position[0], enemy.real_position[1]
             dx, dy = enemy_x - tower_x, enemy_y - tower_y
             dist_to_enemy = math.sqrt(dx ** 2 + dy ** 2)
 

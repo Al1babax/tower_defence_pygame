@@ -79,6 +79,13 @@ class Game:
             # Move enemy
             enemy_reach_end = enemy.move_forward(self.level.terrain, self.level.end_blocks, self.frame)
 
+            # Print enemy shortest path
+            if abs(enemy.movement_vector[0]) > 0 and abs(enemy.movement_vector[1]) > 0:
+                # print("Current waypoint: ", enemy.previous_waypoint)
+                # print("Next waypoint: ", enemy.shortest_path[0])
+                # print("movement vector: ", enemy.movement_vector)
+                pass
+
             if enemy_reach_end:
                 # If enemy reached the end, remove enemy from the list, remove 0 terrain block from the position
                 # and remove 1 life from the player

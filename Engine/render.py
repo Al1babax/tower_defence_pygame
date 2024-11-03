@@ -7,6 +7,7 @@ import pygame
 Class to render the game to the screen
 """
 
+# TODO: Still something wrong with turret rotation, only works for some angles
 # TODO: Render the bullet of the tower
 # TODO: Features to add: upgrade tower, sell tower, buy tower
 # TODO: menu to start new game, pause game, exit game
@@ -187,6 +188,9 @@ class Render:
         self.money_font: object = None
         self.money_text: object = None
 
+        self.mouse_block_pos = None
+        self.mouse_abs_pos = None
+
         # Get the game window to show up
         self.create_game_window()
 
@@ -232,8 +236,8 @@ class Render:
         health_bar_width = int((enemy.current_hp / enemy.max_hp) * self.block_size)
         health_bar_height = self.block_size // 6
 
-        health_bar_x_pos = SCREEN_X_POS + (enemy.previous_waypoint[1] * self.block_size)
-        health_bar_y_pos = SCREEN_Y_POS + (enemy.previous_waypoint[0] * self.block_size)
+        health_bar_x_pos = SCREEN_X_POS + (enemy.real_position[1] * self.block_size)
+        health_bar_y_pos = SCREEN_Y_POS + (enemy.real_position[0] * self.block_size)
         health_rect = pygame.Rect(health_bar_x_pos, health_bar_y_pos, health_bar_width, health_bar_height)
 
         return health_rect
@@ -251,8 +255,8 @@ class Render:
             enemy_sprite = Sprite(sprite_category=sprite_category, sprite_type=sprite_type, enemy_action=enemy_action,
                                   size=(self.block_size, self.block_size))
 
-            enemy_x_pos = self.block_size * enemy.previous_waypoint[1] + SCREEN_X_POS
-            enemy_y_pos = self.block_size * enemy.previous_waypoint[0] + SCREEN_Y_POS
+            enemy_x_pos = self.block_size * enemy.real_position[1] + SCREEN_X_POS
+            enemy_y_pos = self.block_size * enemy.real_position[0] + SCREEN_Y_POS
 
             self.game_window.blit(enemy_sprite.get_sprite(), (enemy_x_pos, enemy_y_pos))
 
@@ -306,6 +310,46 @@ class Render:
         self.game_window.blit(self.lives_text, (self.block_size, self.block_size // 2))
         self.game_window.blit(self.money_text, (self.block_size, self.block_size))
 
+    def get_mouse_pos(self):
+        # Get mouse position (x, y) based on level grid
+        self.mouse_abs_pos = pygame.mouse.get_pos()
+        mouse_relative_pos = (self.mouse_abs_pos[0] - SCREEN_X_POS, self.mouse_abs_pos[1] - SCREEN_Y_POS)
+        mouse_x_pos = mouse_relative_pos[0] // self.block_size
+        mouse_y_pos = mouse_relative_pos[1] // self.block_size
+
+        self.mouse_block_pos = (mouse_x_pos, mouse_y_pos)
+
+    def highlight_tower_slot(self):
+        # Highlight towerb block
+        tower_x_pos = SCREEN_X_POS + self.mouse_block_pos[0] * self.block_size
+        tower_y_pos = SCREEN_Y_POS + self.mouse_block_pos[1] * self.block_size
+        tower_rect = pygame.Rect(tower_x_pos, tower_y_pos, self.block_size, self.block_size)
+        pygame.draw.rect(self.game_window, "White", tower_rect, 1)
+
+    def handle_existing_tower(self):
+        left_click = pygame.mouse.get_pressed()[0]
+
+    def handle_empty_tower_slot(self):
+        left_click = pygame.mouse.get_pressed()[0]
+
+    def handle_mouse_events(self, tower_list: List[object], tower_slots):
+        from Engine.tower import Tower
+        tower_list: List[Tower] = tower_list
+
+        built_towers = [(tower.position[1], tower.position[0]) for tower in tower_list]
+
+        for tower in tower_slots:
+            tower_slot_pos = (tower[1], tower[0])
+            # Highlight tower block
+            if tower_slot_pos == self.mouse_block_pos:
+                self.highlight_tower_slot()
+
+                # Handle existing towers
+                if self.mouse_block_pos in built_towers:
+                    self.handle_existing_tower()
+                else:
+                    self.handle_empty_tower_slot()
+
     def render_game(self, render_package: dict):
         # Render enemies
         enemy_list = render_package["level"].enemies
@@ -356,6 +400,11 @@ class Render:
 
         # Update various elements on screen
         self.render_game(render_package)
+
+        # Handles mouse events
+        self.get_mouse_pos()
+        self.handle_mouse_events(render_package["level"].towers, render_package["level"].tower_slots)
+
         pygame.display.update()
 
         return self.return_package
