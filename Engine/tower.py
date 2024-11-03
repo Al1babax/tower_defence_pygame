@@ -109,7 +109,7 @@ class Tower:
             return None
 
         for enemy in enemy_list:
-            enemy_row, enemy_col = enemy.position[0], enemy.position[1]
+            enemy_row, enemy_col = enemy.previous_waypoint[0], enemy.previous_waypoint[1]
             tower_row, tower_col = self.position[0], self.position[1]
             row_dist, col_dist = abs(tower_row - enemy_row), abs(tower_col - enemy_col)
 
@@ -121,8 +121,8 @@ class Tower:
             bullet_vector = turret_math.calculate_bullet_velocity(
                 tx=self.position[0],
                 ty=self.position[1],
-                ex=enemy.position[0],
-                ey=enemy.position[1],
+                ex=enemy.previous_waypoint[0],
+                ey=enemy.previous_waypoint[1],
                 bullet_speed=self.projectile_speed,
                 waypoints=enemy.shortest_path,
                 enemy_speed=enemy.node_speed
@@ -133,7 +133,7 @@ class Tower:
             # Calculate the angle for turret
             # Eucledian distance between tower and enemy
             tower_x, tower_y = self.position[0], self.position[1]
-            enemy_x, enemy_y = enemy.position[0], enemy.position[1]
+            enemy_x, enemy_y = enemy.previous_waypoint[0], enemy.previous_waypoint[1]
             dx, dy = enemy_x - tower_x, enemy_y - tower_y
             dist_to_enemy = math.sqrt(dx ** 2 + dy ** 2)
 

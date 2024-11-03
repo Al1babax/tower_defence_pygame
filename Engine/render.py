@@ -7,7 +7,6 @@ import pygame
 Class to render the game to the screen
 """
 
-# TODO: Rotate the tower sprite to point towards the enemy
 # TODO: Render the bullet of the tower
 # TODO: Features to add: upgrade tower, sell tower, buy tower
 # TODO: menu to start new game, pause game, exit game
@@ -26,9 +25,11 @@ with open("Engine/sprite_map.json", "r") as file:
 sprite_sheet = pygame.image.load("Assets/main.png")
 
 
-def calculate_block_size():
+def calculate_block_size() -> int:
     block_size_x = SCREEN_WIDTH // 20
     block_size_y = SCREEN_HEIGHT // 10
+    # Hardcoded block size to 60
+    return 60
     return min(block_size_x, block_size_y)
 
 
@@ -231,13 +232,13 @@ class Render:
         health_bar_width = int((enemy.current_hp / enemy.max_hp) * self.block_size)
         health_bar_height = self.block_size // 6
 
-        health_bar_x_pos = SCREEN_X_POS + (enemy.position[1] * self.block_size)
-        health_bar_y_pos = SCREEN_Y_POS + (enemy.position[0] * self.block_size)
+        health_bar_x_pos = SCREEN_X_POS + (enemy.previous_waypoint[1] * self.block_size)
+        health_bar_y_pos = SCREEN_Y_POS + (enemy.previous_waypoint[0] * self.block_size)
         health_rect = pygame.Rect(health_bar_x_pos, health_bar_y_pos, health_bar_width, health_bar_height)
 
         return health_rect
 
-    def render_enemies(self, enemies: List[object]):
+    def render_enemies(self, enemies: List[object], current_frame: int):
         from Engine.enemy import Enemy
         enemies: List[Enemy] = enemies
 
@@ -250,8 +251,8 @@ class Render:
             enemy_sprite = Sprite(sprite_category=sprite_category, sprite_type=sprite_type, enemy_action=enemy_action,
                                   size=(self.block_size, self.block_size))
 
-            enemy_x_pos = self.block_size * enemy.position[1] + SCREEN_X_POS
-            enemy_y_pos = self.block_size * enemy.position[0] + SCREEN_Y_POS
+            enemy_x_pos = self.block_size * enemy.previous_waypoint[1] + SCREEN_X_POS
+            enemy_y_pos = self.block_size * enemy.previous_waypoint[0] + SCREEN_Y_POS
 
             self.game_window.blit(enemy_sprite.get_sprite(), (enemy_x_pos, enemy_y_pos))
 
@@ -308,7 +309,8 @@ class Render:
     def render_game(self, render_package: dict):
         # Render enemies
         enemy_list = render_package["level"].enemies
-        self.render_enemies(enemy_list)
+        current_frame = render_package["current_frame"]
+        self.render_enemies(enemy_list, current_frame)
 
         # Render towers, and their current shooting range
         tower_list = render_package["level"].towers

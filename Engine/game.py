@@ -1,4 +1,5 @@
 from typing import Optional, List, Tuple
+import random
 
 # Engine modules
 from Engine.tower import Tower
@@ -35,7 +36,8 @@ class Game:
         self.money = 1000
 
         # Force spawn turret for testing
-        self.force_spawn_turret_for_testing()
+        # self.force_spawn_turret_for_testing()
+        self.force_spawn_turret_2()
 
     def force_spawn_turret_for_testing(self):
         # Force spawn turret for testing
@@ -43,6 +45,16 @@ class Game:
         position = [5, 10]
         new_tower = Tower("standard", position)
         self.level.update(2, current_position=position, tower=new_tower)
+
+    def force_spawn_turret_2(self):
+        # Randomly choose turret spawn to put a turret
+        # Find a terrain block with open turret slot and spawn a turret there
+        if len(self.level.tower_slots) == 0:
+            return
+
+        random_turret_position = random.choice(self.level.tower_slots)
+        new_tower = Tower("standard", random_turret_position)
+        self.level.update(2, current_position=random_turret_position, tower=new_tower)
 
     def tower_actions(self):
         # Function that applies all the tower damage to enemies in their area
@@ -55,7 +67,7 @@ class Game:
 
             # If enemy dies, remove it from the enemy_list, add 0 terrain block to the position and add money
             self.money += possible_death_enemy.money_value
-            self.level.update(1, current_position=possible_death_enemy.position)
+            self.level.update(1, current_position=possible_death_enemy.previous_waypoint)
 
     def enemy_actions(self):
         # Go through all the enemies and try to move them forward
@@ -71,7 +83,7 @@ class Game:
                 # If enemy reached the end, remove enemy from the list, remove 0 terrain block from the position
                 # and remove 1 life from the player
                 self.lives -= 1
-                self.level.update(1, current_position=enemy.position)
+                self.level.update(1, current_position=enemy.previous_waypoint)
                 print(f"Enemy reached the end! Lives left: {self.lives}")
 
     def update(self):

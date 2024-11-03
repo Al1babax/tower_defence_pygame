@@ -154,11 +154,14 @@ def a_star_algorithm(current_position: List[int], terrain: List[List], end_posit
 # General Enemy class with shared actions
 class Enemy:
     def __init__(self, enemy_type: str):
-        self.position = None
         self.enemy_type = enemy_type
 
         # Shortest path for the enemy to follow
         self.shortest_path: List[List[int]] = []
+        self.previous_waypoint = None
+
+        # Real position will be the actual pixel the enemy is at with every frame
+        self.real_position = None
 
         # Init enemy attributes
         self.max_hp = template_enemies[enemy_type]["health"]
@@ -179,11 +182,11 @@ class Enemy:
 
     def calculate_shortest_path(self, terrain: List[List], end_pos: List[int]) -> None:
         # Calculate shortens path and save to self.shortest_path
-        self.shortest_path = a_star_algorithm(self.position, terrain, end_pos)
+        self.shortest_path = a_star_algorithm(self.previous_waypoint, terrain, end_pos)
 
         # Based on where the next shortest path is calculate the movement vector
         next_block = self.shortest_path[0]
-        self.enemy_movement_vector = (next_block[0] - self.position[0], next_block[1] - self.position[1])
+        self.enemy_movement_vector = (next_block[0] - self.previous_waypoint[0], next_block[1] - self.previous_waypoint[1])
 
     def move_forward(self, terrain: List[List], end_pos: List[List[int]], current_frame: int) -> bool:
         """
@@ -199,10 +202,11 @@ class Enemy:
             return False
 
         # Move enemy to the next block
+        # TODO: Base on the movement speed of the enemy check if it is supposed to move now
         next_block = self.shortest_path.pop(0)
 
         # Calculate the movement vector
-        self.enemy_movement_vector = (next_block[0] - self.position[0], next_block[1] - self.position[1])
+        self.enemy_movement_vector = (next_block[0] - self.previous_waypoint[0], next_block[1] - self.previous_waypoint[1])
 
         # Make certain next block is not occupied by another enemy
         if isinstance(terrain[next_block[0]][next_block[1]], Enemy):
@@ -210,16 +214,16 @@ class Enemy:
 
         # Move enemy to the next block
         terrain[next_block[0]][next_block[1]] = self
-        terrain[self.position[0]][self.position[1]] = TerrainBlock(0)
+        terrain[self.previous_waypoint[0]][self.previous_waypoint[1]] = TerrainBlock(0)
 
         # Update enemy position
-        self.position = next_block
+        self.previous_waypoint = next_block
 
         # Update last move frame
         self.last_move_frame = current_frame
 
         # Check if enemy reached the end
-        return self.position in end_pos
+        return self.previous_waypoint in end_pos
 
     def take_damage(self, damage: int) -> bool:
         # General damage logic for all enemies, total_damage = damage - armor

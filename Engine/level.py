@@ -59,11 +59,79 @@ class Level:
         # List of enemies and towers
         self.enemies: List = []
         self.towers: List[Tower] = []
+        self.tower_slots: List[List[int]] = []
 
         # Create terrain
-        self.create_terrain()
+        # self.create_terrain()
+        self.create_terrain_2()
+
+    def create_random_level(self):
+        random_enemy_path = []
+
+        # Start from random position on the left wall
+        current_pos = [random.randint(0, 9), 0]
+        random_enemy_path.append(current_pos.copy())
+
+        # From starting_pos move randomly only to right or up or down, also cannot go to visited position
+        while current_pos[1] < 19:
+            # Randomly choose direction and make certain it is valid
+            new_pos = None
+            while True:
+                random_direction = random.randint(0, 2)
+
+                if random_direction == 0:
+                    if current_pos[1] + 1 < 20:
+                        new_pos = [current_pos[0], current_pos[1] + 1]
+                        break
+                elif random_direction == 1:
+                    if current_pos[0] - 1 >= 0:
+                        new_pos = [current_pos[0] - 1, current_pos[1]]
+                        break
+                elif random_direction == 2:
+                    if current_pos[0] + 1 < 10:
+                        new_pos = [current_pos[0] + 1, current_pos[1]]
+                        break
+
+            # Make certain that the path does not go back to the same position
+            if new_pos in random_enemy_path:
+                continue
+
+            current_pos = new_pos
+            random_enemy_path.append(current_pos.copy())
+
+        return random_enemy_path
+
+    def create_terrain_2(self):
+        random_enemy_path = self.create_random_level()
+
+        # First fill terrain with static blocks
+        for i in range(10):
+            self.terrain.append([TerrainBlock(2) for _ in range(20)])
+
+        # Place enemy path
+        for path in random_enemy_path:
+            self.terrain[path[0]][path[1]] = TerrainBlock(0)
+
+        # Set the start and end blocks
+        self.start_blocks.append(random_enemy_path[0])
+        self.end_blocks.append(random_enemy_path[-1])
+
+        # Randomly put two tower placements on any of the static blocks
+        for _ in range(2):
+            x = random.randint(0, 9)
+            y = random.randint(0, 19)
+
+            while self.terrain[x][y].block_type != 2:
+                x = random.randint(0, 9)
+                y = random.randint(0, 19)
+
+            self.terrain[x][y] = TerrainBlock(1)
+
+            # Save the tower slot
+            self.tower_slots.append([x, y])
 
     def create_terrain(self):
+        self.create_random_level()
         # Create terrain based on the level design
         # For now create a simple terrain for testing and dev purposes
         # 10x20 grid with straight path from top to bottom for enemies, and some tower placements
@@ -154,7 +222,7 @@ class Level:
                 random_start = None
 
         # Save enemy position
-        enemy.position = random_start
+        enemy.previous_waypoint = random_start
 
         # Add enemy to the list of enemies
         self.enemies.append(enemy)
@@ -230,7 +298,7 @@ class Level:
     def update(self,
                event: int,
                tower: Optional[Tower] = None,
-               enemy = None,
+               enemy=None,
                current_position: Optional[List[int]] = None,
                new_position: Optional[List[int]] = None
                ):
